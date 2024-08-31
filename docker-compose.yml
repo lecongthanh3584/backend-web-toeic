@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  spring:
+    image: your-spring-app:latest
+    ports:
+      - "9004:9004"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/db-webtoeic
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:latest
+    environment:
+      - MYSQL_DATABASE=db-webtoeic
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
