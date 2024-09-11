@@ -17,4 +17,6 @@ public interface ITopicService {
     Topic updateTopicStatus(Integer topicId, Integer newStatus);
     boolean deleteTopic(Integer topicId) throws IOException;
     boolean isTopicNameExists(String topicName);
+    boolean isTopicNameExistsAndIdNot(String topicName, Integer id);
+
 }

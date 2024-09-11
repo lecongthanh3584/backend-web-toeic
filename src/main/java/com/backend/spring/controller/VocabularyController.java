@@ -1,14 +1,18 @@
 package com.backend.spring.controller;
 
+import com.backend.spring.constants.MessageConstant;
 import com.backend.spring.enums.EStatus;
+import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.mapper.VocabularyMapper;
 import com.backend.spring.entity.Vocabulary;
 import com.backend.spring.payload.request.VocabularyRequest;
 import com.backend.spring.payload.response.MessageResponse;
 import com.backend.spring.payload.response.VocabularyResponse;
+import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.service.Vocabulary.IVocabularyService;
 import io.jsonwebtoken.io.IOException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -25,7 +29,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class VocabularyController {
 
@@ -33,41 +36,46 @@ public class VocabularyController {
     private IVocabularyService iVocabularyService;
 
     @GetMapping("/admin/vocabulary/get-all")
-    public ResponseEntity<List<VocabularyResponse>> getAllVocabularies() {
+    public ResponseEntity<?> getAllVocabularies() {
         List<VocabularyResponse> vocabularyList = iVocabularyService.getAllVocabularies().stream().map(
                 VocabularyMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
-        return new ResponseEntity<>(vocabularyList, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Vocabulary.GET_DATA_SUCCESS, vocabularyList),
+                HttpStatus.OK);
     }
 
     @GetMapping("/admin/vocabulary/get-by-id/{id}")
-    public ResponseEntity<VocabularyResponse> getVocabularyById(@PathVariable("id") Integer vocabularyId) {
+    public ResponseEntity<?> getVocabularyById(@PathVariable("id") @Min(1) Integer vocabularyId) {
         VocabularyResponse vocabulary = VocabularyMapper.mapFromEntityToResponse(iVocabularyService.getVocabularyById(vocabularyId));
 
         if (vocabulary != null) {
-            return new ResponseEntity<>(vocabulary, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Vocabulary.GET_DATA_SUCCESS, vocabulary),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Vocabulary.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     // Lấy danh sách từ vựng theo topic_id (ADMIN)
     @GetMapping("/admin/vocabulary/get-by-topic/{topicId}")
-    public ResponseEntity<List<VocabularyResponse>> getVocabulariesByTopicId(@PathVariable Integer topicId) {
+    public ResponseEntity<?> getVocabulariesByTopicId(@PathVariable @Min(1) Integer topicId) {
         List<VocabularyResponse> vocabularyList = iVocabularyService.getVocabulariesByTopicId(topicId).stream().map(
                 VocabularyMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
         if (!vocabularyList.isEmpty()) {
-            return new ResponseEntity<>(vocabularyList, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Vocabulary.GET_DATA_SUCCESS, vocabularyList),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(vocabularyList, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Vocabulary.DATA_NOT_FOUND, vocabularyList),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/public/vocabulary/get-by-topic/{topicId}/enable")
-    public ResponseEntity<List<VocabularyResponse>> getEnableVocabulariesByTopicId(@PathVariable Integer topicId) {
+    public ResponseEntity<?> getEnableVocabulariesByTopicId(@PathVariable @Min(1) Integer topicId) {
         List<VocabularyResponse> vocabularyList = iVocabularyService.getVocabulariesByTopicId(topicId).stream().map(
                 VocabularyMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
@@ -78,67 +86,80 @@ public class VocabularyController {
                 .collect(Collectors.toList());
 
         if (!filteredVocabularies.isEmpty()) {
-            return new ResponseEntity<>(filteredVocabularies, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Vocabulary.GET_DATA_SUCCESS, filteredVocabularies),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(filteredVocabularies, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Vocabulary.DATA_NOT_FOUND, filteredVocabularies),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping("/admin/vocabulary/create")
-    public ResponseEntity<MessageResponse> createVocabulary(@ModelAttribute @Valid VocabularyRequest vocabularyRequest) {
+    public ResponseEntity<?> createVocabulary(@ModelAttribute @Valid VocabularyRequest vocabularyRequest) {
         try {
             Vocabulary createdVocabulary = iVocabularyService.createVocabulary(vocabularyRequest);
 
             if(createdVocabulary != null) {
-                return ResponseEntity.ok(new MessageResponse("Thêm từ vựng thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.Vocabulary.CREATE_SUCCESS),
+                        HttpStatus.CREATED);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Thêm từ vựng thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.Vocabulary.CREATE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | java.io.IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PutMapping("/admin/vocabulary/update")
-    public ResponseEntity<MessageResponse> updateVocabulary(@ModelAttribute @Valid VocabularyRequest vocabularyRequest) {
+    public ResponseEntity<?> updateVocabulary(@ModelAttribute @Valid VocabularyRequest vocabularyRequest) {
         try {
             Vocabulary updatedVocabulary = iVocabularyService.updateVocabulary(vocabularyRequest);
 
             if (updatedVocabulary != null) {
-                return ResponseEntity.ok(new MessageResponse("Cập nhật từ vựng thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Vocabulary.UPDATE_SUCCESS),
+                        HttpStatus.OK);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Cập nhật từ vựng thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Vocabulary.UPDATE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
 
         } catch (IOException | java.io.IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi khi cập nhật từ vựng: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @DeleteMapping("/admin/vocabulary/delete/{id}")
-    public ResponseEntity<MessageResponse> deleteVocabulary(@PathVariable("id") Integer vocabularyId) {
+    public ResponseEntity<?> deleteVocabulary(@PathVariable("id") @Min(1) Integer vocabularyId) {
         try {
             boolean result = iVocabularyService.deleteVocabulary(vocabularyId);
 
             if(result) {
-                return ResponseEntity.ok(new MessageResponse("Xóa từ vựng thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.Vocabulary.DELETE_SUCCESS),
+                        HttpStatus.OK);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Xoá từ vựng thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.Vocabulary.DELETE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
 
         } catch (IOException | java.io.IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi khi xoá từ vựng: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PutMapping("/admin/vocabulary/update-status/{id}")
-    public ResponseEntity<MessageResponse> updateVocabularyStatus(@PathVariable("id") Integer vocabularyId, @RequestBody Integer newStatus) {
+    public ResponseEntity<?> updateVocabularyStatus(@PathVariable("id") @Min(1) Integer vocabularyId, @RequestBody Integer newStatus) {
         Vocabulary vocabularyUpdate = iVocabularyService.updateVocabularyStatus(vocabularyId, newStatus);
 
         if(vocabularyUpdate != null) {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật trạng thái của từ vựng thành công!"), HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Vocabulary.UPDATE_STATUS_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật trạng thái của từ vựng thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Vocabulary.UPDATE_STATUS_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -162,22 +183,26 @@ public class VocabularyController {
     }
 
     @PostMapping("/admin/vocabulary/upload")
-    public ResponseEntity<MessageResponse> uploadVocabularyFromExcel(@RequestParam("file") MultipartFile file, @RequestParam("topicId") Integer topicId) {
+    public ResponseEntity<?> uploadVocabularyFromExcel(@RequestParam("file") MultipartFile file, @RequestParam("topicId") @Min(1) Integer topicId) {
         if (file == null || file.isEmpty()) {
-            return new ResponseEntity<>(new MessageResponse("Vui lòng chọn 1 file để upload"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPLOAD_FILE_FAILED.getValue(), MessageConstant.Vocabulary.FILE_IS_REQUIRED),
+                    HttpStatus.BAD_REQUEST);
         }
 
         try {
             boolean result = iVocabularyService.uploadVocabularyFromExcel(file, topicId);
 
             if(result) {
-                return ResponseEntity.ok(new MessageResponse("Upload thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPLOAD_FILE_SUCCESS.getValue(), MessageConstant.Vocabulary.UPLOAD_FILE_SUCCESS),
+                        HttpStatus.OK);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Upload thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPLOAD_FILE_FAILED.getValue(), MessageConstant.Vocabulary.UPLOAD_FILE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
 
         } catch (Exception e) {
-            return new ResponseEntity<>(new MessageResponse("Upload thất bại: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPLOAD_FILE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

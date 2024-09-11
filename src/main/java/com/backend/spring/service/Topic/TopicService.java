@@ -197,4 +197,10 @@ public class TopicService implements ITopicService {
     public boolean isTopicNameExists(String topicName) {
         return topicRepository.existsByTopicName(topicName);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isTopicNameExistsAndIdNot(String topicName, Integer id) {
+        return topicRepository.existsByTopicNameAndTopicIdNot(topicName, id);
+    }
 }

@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class ExamController {
 
@@ -83,7 +82,7 @@ public class ExamController {
 
         if (updatedExam != null) {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Exam.UPDATE_SUCCESS),
-                    HttpStatus.NO_CONTENT);
+                    HttpStatus.OK);
         } else {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Exam.UPDATE_FAILED),
                     HttpStatus.BAD_REQUEST);
@@ -96,7 +95,7 @@ public class ExamController {
 
         if(result) {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.Exam.DELETE_SUCCESS),
-                    HttpStatus.NO_CONTENT);
+                    HttpStatus.OK);
         } else {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.Exam.DELETE_FAILED),
                     HttpStatus.BAD_REQUEST);
@@ -110,7 +109,7 @@ public class ExamController {
 
         if(examResult != null) {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Exam.UPDATE_STATUS_SUCCESS),
-                    HttpStatus.NO_CONTENT);
+                    HttpStatus.OK);
         } else {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Exam.UPDATE_STATUS_FAILED),
                     HttpStatus.BAD_REQUEST);

@@ -1,12 +1,16 @@
 package com.backend.spring.controller;
 
+import com.backend.spring.constants.MessageConstant;
+import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.mapper.NoteMapper;
 import com.backend.spring.entity.Note;
 import com.backend.spring.payload.request.NoteRequest;
 import com.backend.spring.payload.response.MessageResponse;
 import com.backend.spring.payload.response.NoteResponse;
+import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.service.Note.INoteService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +22,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class NoteController {
 
@@ -26,69 +29,80 @@ public class NoteController {
     private INoteService iNoteService;
 
     @PostMapping("/user/note/create")
-    public ResponseEntity<MessageResponse> createNote(@RequestBody @Valid NoteRequest noteRequest) {
+    public ResponseEntity<?> createNote(@RequestBody @Valid NoteRequest noteRequest) {
         Note createdNote = iNoteService.createNote(noteRequest);
 
         if(createdNote != null) {
-            return ResponseEntity.ok(new MessageResponse("Tạo mới ghi chú thành công"));
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.Note.CREATE_SUCCESS),
+                    HttpStatus.CREATED);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Tạo mới ghi chú thất bại"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.Note.CREATE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
 
     }
 
     @PutMapping("/user/note/update")
-    public ResponseEntity<MessageResponse> updateNote(@RequestBody @Valid NoteRequest noteRequest) {
+    public ResponseEntity<?> updateNote(@RequestBody @Valid NoteRequest noteRequest) {
         Note note = iNoteService.updateNote(noteRequest);
 
         if(note != null) {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật ghi chú thành công!"), HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Note.UPDATE_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật ghi chú thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Note.UPDATE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
     @DeleteMapping("/user/note/delete/{noteId}")
-    public ResponseEntity<MessageResponse> deleteNote(@PathVariable Integer noteId) {
+    public ResponseEntity<?> deleteNote(@PathVariable("noteId") @Min(1) Integer noteId) {
         boolean result = iNoteService.deleteNote(noteId);
 
         if(result) {
-            return new ResponseEntity<>(new MessageResponse("Xoá ghi chú thành công!"), HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.Note.DELETE_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Xoá ghi chú thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.Note.DELETE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping("/admin/note/get-by-id/{id}")
-    public ResponseEntity<NoteResponse> getNoteById(@PathVariable("id") Integer noteId) {
+    public ResponseEntity<?> getNoteById(@PathVariable("id") @Min(1) Integer noteId) {
         NoteResponse note = NoteMapper.mapFromEntityToResponse(iNoteService.getNoteById(noteId));
 
         if (note != null) {
-            return new ResponseEntity<>(note, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Note.GET_DATA_SUCCESS, note),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Note.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/admin/note/get-all")
-    public ResponseEntity<List<NoteResponse>> getAllNotes() {
+    public ResponseEntity<?> getAllNotes() {
         List<NoteResponse> noteList = iNoteService.getAllNotes().stream().map(
                 NoteMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
-        return new ResponseEntity<>(noteList, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Note.GET_DATA_SUCCESS, noteList),
+                HttpStatus.OK);
     }
 
     @GetMapping("/user/note/get-note-by-user/{userId}")
-    public ResponseEntity<List<NoteResponse>> getAllNotesByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<?> getAllNotesByUserId(@PathVariable("userId") @Min(1) Integer userId) {
         List<NoteResponse> noteList = iNoteService.getAllNotesByUserId(userId).stream().map(
                 NoteMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
         if (!noteList.isEmpty()) {
-            return new ResponseEntity<>(noteList, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Note.GET_DATA_SUCCESS, noteList),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(noteList, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Note.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 }
