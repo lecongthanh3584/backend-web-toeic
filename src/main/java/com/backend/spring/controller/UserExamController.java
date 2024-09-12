@@ -1,13 +1,17 @@
 package com.backend.spring.controller;
 
+import com.backend.spring.constants.MessageConstant;
+import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.payload.response.DailyExamCountResponse;
 import com.backend.spring.payload.response.ExamAttemptResponse;
 import com.backend.spring.mapper.UserExamMapper;
 import com.backend.spring.entity.UserExam;
 import com.backend.spring.payload.request.UserExamRequest;
 import com.backend.spring.payload.response.UserExamResponse;
+import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.service.UserExam.IUserExamService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +24,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class UserExamController {
 
@@ -28,22 +31,25 @@ public class UserExamController {
     private IUserExamService iUserExamService;
 
     @GetMapping("/admin/user-exam/get-all")
-    public ResponseEntity<List<UserExamResponse>> getAllUserExams() {
+    public ResponseEntity<?> getAllUserExams() {
         List<UserExamResponse> userExamList = iUserExamService.getAllUserExams().stream().map(
                 UserExamMapper::MapFromEntityToResponse
         ).collect(Collectors.toList());
 
-        return new ResponseEntity<>(userExamList, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, userExamList),
+                HttpStatus.OK);
     }
 
     @GetMapping("/admin/user-exam/get-by-id/{id}")
-    public ResponseEntity<UserExamResponse> getUserExamById(@PathVariable Integer id) {
+    public ResponseEntity<?> getUserExamById(@PathVariable("id") @Min(1) Integer id) {
         UserExamResponse userExam = UserExamMapper.MapFromEntityToResponse(iUserExamService.getUserExamById(id));
 
         if (userExam != null) {
-            return new ResponseEntity<>(userExam, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, userExam),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.UserExam.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
@@ -52,17 +58,12 @@ public class UserExamController {
         UserExam createdUserExam = iUserExamService.createUserExam(userExamRequest);
 
         if(createdUserExam != null) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("userExamId", createdUserExam.getUserExamId());
-            response.put("message", "Thêm kết quả bài thi của người dùng thành công!");
-            return ResponseEntity.ok(response);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.UserExam.CREATE_SUCCESS, createdUserExam.getUserExamId()),
+                    HttpStatus.CREATED);
 
         } else {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Thêm kết quả bài thi của người dùng thất bại!");
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.UserExam.CREATE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -75,7 +76,8 @@ public class UserExamController {
         // Sắp xếp danh sách userExams theo createdAt (ngày tạo) giảm dần (từ mới đến cũ)
         userExams.sort(Comparator.comparing(UserExamResponse::getCreatedAt).reversed());
 
-        return ResponseEntity.ok(userExams);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, userExams),
+                HttpStatus.OK);
     }
 
     @GetMapping("/user/user-exam/has-user-exams/{examId}/{userId}")
@@ -83,23 +85,17 @@ public class UserExamController {
         boolean hasUserExams = iUserExamService.hasUserExamsByExamIdAndUserId(examId, userId);
 
         if (hasUserExams) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("hasUserExams", hasUserExams);
-            response.put("message", "Người dùng đã tham gia bài thi này!");
-            return ResponseEntity.ok(response);
-
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.USER_JOINED, hasUserExams),
+                    HttpStatus.OK);
         } else {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Người dùng chưa tham gia bài thi này, có thể thi!");
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.USER_NOT_JOINED, hasUserExams),
+                    HttpStatus.OK);
         }
     }
 
     // Thống kê bài thi có điểm cao nhất cho mỗi người dùng
     @GetMapping("/user/user-exam/get-max-scores-by-userId/{userId}")
-    public ResponseEntity<Map<Integer, UserExamResponse>> getAllMaxScoresByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<?> getAllMaxScoresByUserId(@PathVariable("userId") @Min(1) Integer userId) {
         List<UserExam> userExams = iUserExamService.getUserExamsByUserId(userId); // Lấy tất cả bài thi FULLTEST
 
         Map<Integer, UserExamResponse> maxScoresByExamId = new LinkedHashMap<>();
@@ -115,12 +111,13 @@ public class UserExamController {
             maxScoresByExamId.put(examId, UserExamMapper.MapFromEntityToResponse(userExam));
         }
 
-        return new ResponseEntity<>(maxScoresByExamId, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, maxScoresByExamId),
+                HttpStatus.OK);
     }
 
     // Thống kê điểm cao nhất hằng ngày cho mỗi người dùng
     @GetMapping("/user/user-exam/get-daily-highest-score-by-userId/{userId}")
-    public ResponseEntity<Map<String, UserExamResponse>> getDailyHighestScoreByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<?> getDailyHighestScoreByUserId(@PathVariable Integer userId) {
         List<UserExam> userExams = iUserExamService.getUserExamsByUserId(userId); // Lấy tất cả bài thi của người dùng cụ thể
         Map<String, UserExamResponse> maxScoresByDate = new LinkedHashMap<>();
 
@@ -133,15 +130,17 @@ public class UserExamController {
 
             maxScoresByDate.put(createdAt, UserExamMapper.MapFromEntityToResponse(userExam));
         }
-        return new ResponseEntity<>(maxScoresByDate, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, maxScoresByDate),
+                HttpStatus.OK);
     }
 
 //  Tổng thời gian luyện tập
     @GetMapping("/user/user-exam/get-total-completion-time-by-userId/{userId}")
-    public ResponseEntity<Long> getTotalCompletionTimeByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<?> getTotalCompletionTimeByUserId(@PathVariable("userId") @Min(1) Integer userId) {
         Long totalCompletionTime = iUserExamService.getTotalCompletionTimeByUserId(userId);
         // Trả về tổng thời gian luyện tập dưới dạng số giây
-        return ResponseEntity.ok(totalCompletionTime);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, totalCompletionTime),
+                HttpStatus.OK);
     }
 
 //  Thống kê tổng số lượt thi của từng bài thi (ADMIN)
@@ -149,13 +148,12 @@ public class UserExamController {
     public ResponseEntity<?> getNumberAttemptForEachExam() {
         try {
             List<ExamAttemptResponse> totalExamCountsByExamName = iUserExamService.getNumberAttemptForEachExam();
-            return ResponseEntity.ok(totalExamCountsByExamName);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, totalExamCountsByExamName),
+                    HttpStatus.OK);
 
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Lỗi khi truy vấn tổng số người thi cho từng bài thi: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -164,25 +162,26 @@ public class UserExamController {
     public ResponseEntity<?> getDailyExamCounts() {
         try {
             List<DailyExamCountResponse> dailyExamCounts = iUserExamService.getDailyExamCounts();
-            return ResponseEntity.ok(dailyExamCounts);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, dailyExamCounts),
+                    HttpStatus.OK);
 
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Lỗi khi truy vấn tổng số lượt thi hằng ngày: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     // Tính độ dài (length) của danh sách bài thi của người dùng theo userId
     @GetMapping("/user/user-exam/get-quantity-exam-for-user/{userId}")
-    public ResponseEntity<Integer> getUserExamsLengthByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<?> getUserExamsLengthByUserId(@PathVariable("userId") @Min(1) Integer userId) {
         List<UserExam> userExams = iUserExamService.getUserExamsByUserId(userId);
 
         if (!userExams.isEmpty()) {
-            return ResponseEntity.ok(userExams.size());
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, userExams.size()),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(0, HttpStatus.NOT_FOUND); // Không tìm thấy bài thi hoặc người dùng
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.UserExam.DATA_NOT_FOUND, 0),
+                    HttpStatus.NOT_FOUND);
         }
     }
 

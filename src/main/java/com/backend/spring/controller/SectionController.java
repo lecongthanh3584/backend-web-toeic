@@ -1,13 +1,17 @@
 package com.backend.spring.controller;
 
+import com.backend.spring.constants.MessageConstant;
 import com.backend.spring.enums.EStatus;
+import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.mapper.SectionMapper;
 import com.backend.spring.entity.Section;
 import com.backend.spring.payload.request.SectionRequest;
 import com.backend.spring.payload.response.MessageResponse;
 import com.backend.spring.payload.response.SectionResponse;
+import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.service.Section.ISectionService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +25,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class SectionController {
 
@@ -30,17 +33,18 @@ public class SectionController {
 
 //  Admin
     @GetMapping("/admin/section/get-all")
-    public ResponseEntity<List<SectionResponse>> getAllSections() {
+    public ResponseEntity<?> getAllSections() {
         List<SectionResponse> sectionList = iSectionService.getAllSections().stream().map(
                 SectionMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
-        return new ResponseEntity<>(sectionList, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Section.GET_DATA_SUCCESS, sectionList),
+                HttpStatus.OK);
     }
 
 //  Người dùng
     @GetMapping("/public/section/get-all-enable")
-    public ResponseEntity<List<SectionResponse>> getAllEnableSections() {
+    public ResponseEntity<?> getAllEnableSections() {
         List<SectionResponse> sectionList = iSectionService.getAllSections().stream().map(
                 SectionMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
@@ -50,95 +54,113 @@ public class SectionController {
                 .filter(section -> section.getStatus() == EStatus.ENABLE.getValue())
                 .collect(Collectors.toList());
 
-        return new ResponseEntity<>(filteredSectionList, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Section.GET_DATA_SUCCESS, filteredSectionList),
+                HttpStatus.OK);
     }
 
     @GetMapping("/admin/section/get-by-id/{id}")
-    public ResponseEntity<SectionResponse> getSectionById(@PathVariable Integer id) {
+    public ResponseEntity<?> getSectionById(@PathVariable("id") @Min(1) Integer id) {
         SectionResponse section = SectionMapper.mapFromEntityToResponse(iSectionService.getSectionById(id));
 
         if (section != null) {
-            return new ResponseEntity<>(section, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Section.GET_DATA_SUCCESS, section),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Section.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/admin/section/get-section-name-by-id/{id}")
-    public ResponseEntity<String> getSectionNameById(@PathVariable("id") Integer sectionId) {
+    public ResponseEntity<?> getSectionNameById(@PathVariable("id") @Min(1) Integer sectionId) {
         String sectionName = iSectionService.getSectionNameById(sectionId);
 
         if (sectionName != null) {
-            return new ResponseEntity<>(sectionName, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Section.GET_DATA_SUCCESS, sectionName),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Section.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping("/admin/section/create")
-    public ResponseEntity<MessageResponse> createSection(@ModelAttribute @Valid SectionRequest sectionRequest) {
+    public ResponseEntity<?> createSection(@ModelAttribute @Valid SectionRequest sectionRequest) {
         // Kiểm tra xem tên section đã tồn tại chưa
         if (iSectionService.isSectionNameExists(sectionRequest.getName())) {
-            return new ResponseEntity<>(new MessageResponse("Tên dạng phần đã tồn tại"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_FIELD_EXIST.getValue(), MessageConstant.Section.SECTION_NAME_EXISTED),
+                    HttpStatus.BAD_REQUEST);
         }
 
         try {
             Section createdSection = iSectionService.createSection(sectionRequest);
 
             if(createdSection != null) {
-                return ResponseEntity.ok(new MessageResponse("Thêm dạng phần thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.Section.CREATE_SUCCESS),
+                        HttpStatus.CREATED);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Thêm dạng phần thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.Section.CREATE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
 
         } catch (IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi khi thêm dạng phần: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PutMapping("/admin/section/update")
-    public ResponseEntity<MessageResponse> updateSection(@ModelAttribute @Valid SectionRequest sectionRequest) {
+    public ResponseEntity<?> updateSection(@ModelAttribute @Valid SectionRequest sectionRequest) {
         // Kiểm tra trùng lặp tên section (nếu tên đã thay đổi)
-        if (iSectionService.isSectionNameExists(sectionRequest.getName())) {
-            return new ResponseEntity<>(new MessageResponse("Tên dạng phần đã tồn tại"), HttpStatus.BAD_REQUEST);
+        if (iSectionService.isSectionNameExistsAndIdNot(sectionRequest.getName(), sectionRequest.getSectionId())) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_FIELD_EXIST.getValue(), MessageConstant.Section.SECTION_NAME_EXISTED),
+                    HttpStatus.BAD_REQUEST);
         }
 
         try {
             Section updatedSection = iSectionService.updateSection(sectionRequest);
 
             if (updatedSection != null) {
-                return ResponseEntity.ok(new MessageResponse("Cập nhật dạng phần thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Section.UPDATE_SUCCESS),
+                        HttpStatus.OK);
             } else {
-               return new ResponseEntity<>(new MessageResponse("Cập nhật dạn phần thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Section.UPDATE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
         } catch (IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi khi cập nhật dạng phần: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @DeleteMapping("/admin/section/delete/{id}")
-    public ResponseEntity<MessageResponse> deleteSection(@PathVariable Integer id) {
+    public ResponseEntity<?> deleteSection(@PathVariable("id") @Min(1) Integer id) {
        try {
            boolean result = iSectionService.deleteSection(id);
 
            if(result) {
-               return ResponseEntity.ok(new MessageResponse("Xóa dạng phần thành công!"));
+               return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.Section.DELETE_SUCCESS),
+                       HttpStatus.OK);
            } else {
-               return new ResponseEntity<>(new MessageResponse("Xoá dạng phần thất bại!"), HttpStatus.BAD_REQUEST);
+               return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.Section.DELETE_FAILED),
+                       HttpStatus.BAD_REQUEST);
            }
        } catch (IOException e) {
-           return new ResponseEntity<>(new MessageResponse("Lỗi khi xoá dạng phần: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+           return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), e.getMessage()),
+                   HttpStatus.INTERNAL_SERVER_ERROR);
        }
     }
 
     @PutMapping("/admin/section/update-status/{id}")
-    public ResponseEntity<MessageResponse> updateSectionStatus(@PathVariable Integer id, @RequestBody Integer newStatus) {
+    public ResponseEntity<?> updateSectionStatus(@PathVariable("id") @Min(1) Integer id, @RequestBody Integer newStatus) {
         Section updateSection = iSectionService.updateSectionStatus(id, newStatus);
 
         if(updateSection != null) {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật trạng thái cho dạng phần thành công!"), HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Section.UPDATE_STATUS_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật trạng thái cho dạng phần thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Section.UPDATE_STATUS_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 

@@ -1,12 +1,16 @@
 package com.backend.spring.controller;
 
+import com.backend.spring.constants.MessageConstant;
+import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.mapper.TopicMapper;
 import com.backend.spring.entity.Topic;
 import com.backend.spring.payload.request.TopicRequest;
 import com.backend.spring.payload.response.MessageResponse;
 import com.backend.spring.payload.response.TopicResponse;
+import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.service.Topic.ITopicService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -24,7 +28,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class TopicController {
 
@@ -33,105 +36,123 @@ public class TopicController {
 
 //  Admin
     @GetMapping("/admin/topic/get-all")
-    public ResponseEntity<List<TopicResponse>> getAllTopics() {
+    public ResponseEntity<?> getAllTopics() {
         List<TopicResponse> topicList = iTopicService.getAllTopics().stream().map(
                 TopicMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
-        return new ResponseEntity<>(topicList, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Topic.GET_DATA_SUCCESS, topicList),
+                HttpStatus.OK);
     }
 
 //  Người dùng
-    @GetMapping("/public/topic/get-all-enable")
-    public ResponseEntity<List<TopicResponse>> getAllEnableTopics() {
+    @GetMapping("/public/topic/get-all/enable")
+    public ResponseEntity<?> getAllEnableTopics() {
         List<TopicResponse> topicList = iTopicService.getAllTopicEnable().stream().map(
                 TopicMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
         if (!topicList.isEmpty()) {
-            return new ResponseEntity<>(topicList, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Topic.GET_DATA_SUCCESS, topicList),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(topicList, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Topic.DATA_NOT_FOUND, topicList),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/admin/topic/get-by-id/{id}")
-    public ResponseEntity<TopicResponse> getTopicById(@PathVariable("id") Integer topicId) {
+    public ResponseEntity<?> getTopicById(@PathVariable("id") @Min(1) Integer topicId) {
         TopicResponse topic = TopicMapper.mapFromEntityToResponse(iTopicService.getTopicById(topicId));
 
         if (topic != null) {
-            return new ResponseEntity<>(topic, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Topic.GET_DATA_SUCCESS, topic),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Topic.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping("/admin/topic/create")
-    public ResponseEntity<MessageResponse> createTopic(@ModelAttribute @Valid TopicRequest topicRequest) {
+    public ResponseEntity<?> createTopic(@ModelAttribute @Valid TopicRequest topicRequest) {
         // Kiểm tra xem tên topic đã tồn tại chưa
         if (iTopicService.isTopicNameExists(topicRequest.getTopicName())) {
-            return new ResponseEntity<>(new MessageResponse("Tên chủ đề đã tồn tại, vui lòng chọn tên khác"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.Topic.TOPIC_NAME_EXISTED),
+                    HttpStatus.BAD_REQUEST);
         }
 
         try {
             Topic createdTopic = iTopicService.createTopic(topicRequest);
 
             if(createdTopic != null) {
-                return ResponseEntity.ok(new MessageResponse("Thêm mới topic thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.Topic.CREATE_SUCCESS),
+                        HttpStatus.CREATED);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Thêm mới topic thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.Topic.CREATE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
 
         } catch (IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PutMapping("/admin/topic/update")
-    public ResponseEntity<MessageResponse> updateTopic(@ModelAttribute @Valid TopicRequest topicRequest) {
+    public ResponseEntity<?> updateTopic(@ModelAttribute @Valid TopicRequest topicRequest) {
         // Kiểm tra trùng lặp tên topic (nếu tên đã thay đổi)
-        if (iTopicService.isTopicNameExists(topicRequest.getTopicName())) {
-            return new ResponseEntity<>(new MessageResponse("Tên chủ đề đã tồn tại, vui lòng chọn tên khác"), HttpStatus.BAD_REQUEST);
+        if (iTopicService.isTopicNameExistsAndIdNot(topicRequest.getTopicName(), topicRequest.getTopicId())) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Topic.TOPIC_NAME_EXISTED),
+                    HttpStatus.BAD_REQUEST);
         }
 
         try {
             Topic updatedTopic = iTopicService.updateTopic(topicRequest);
 
             if (updatedTopic != null) {
-                return ResponseEntity.ok(new MessageResponse("Cập nhật topic thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Topic.UPDATE_SUCCESS),
+                        HttpStatus.OK);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Cập nhật topic thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Topic.UPDATE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
 
         } catch (IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @DeleteMapping("/admin/topic/delete/{id}")
-    public ResponseEntity<MessageResponse> deleteTopic(@PathVariable("id") Integer topicId) {
+    public ResponseEntity<?> deleteTopic(@PathVariable("id") @Min(1) Integer topicId) {
         try {
             boolean result = iTopicService.deleteTopic(topicId);
 
             if(result) {
-                return ResponseEntity.ok(new MessageResponse("Xóa topic thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.Topic.DELETE_SUCCESS),
+                        HttpStatus.OK);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Xoá topic thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.Topic.DELETE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
         }catch (IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
     @PutMapping("/admin/topic/update-status/{id}")
-    public ResponseEntity<MessageResponse> updateTopicStatus(@PathVariable("id") Integer topicId, @RequestBody Integer newStatus) {
+    public ResponseEntity<?> updateTopicStatus(@PathVariable("id") @Min(1) Integer topicId, @RequestBody Integer newStatus) {
         Topic topicUpdate = iTopicService.updateTopicStatus(topicId, newStatus);
 
         if(topicUpdate != null) {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật status của topic thành công!"), HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Topic.UPDATE_STATUS_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật status của topic thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Topic.UPDATE_STATUS_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -155,17 +176,20 @@ public class TopicController {
     }
 
     @PostMapping("/admin/topic/upload")
-    public ResponseEntity<MessageResponse> uploadTopicsFromExcel(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadTopicsFromExcel(@RequestParam("file") MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            return new ResponseEntity<>(new MessageResponse("Vui lòng chọn file để upload."), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.Topic.FILE_IS_REQUIRED),
+                    HttpStatus.BAD_REQUEST);
         }
 
         try {
             iTopicService.uploadTopicFromExcel(file);
-            return ResponseEntity.ok(new MessageResponse("Upload thành công!"));
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.Topic.UPLOAD_FILE_SUCCESS),
+                    HttpStatus.CREATED);
 
         } catch (Exception e) {
-            return new ResponseEntity<>(new MessageResponse("Upload thất bại: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

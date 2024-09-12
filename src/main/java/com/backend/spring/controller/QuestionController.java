@@ -1,13 +1,17 @@
 package com.backend.spring.controller;
 
+import com.backend.spring.constants.MessageConstant;
 import com.backend.spring.enums.EStatus;
+import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.mapper.QuestionMapper;
 import com.backend.spring.entity.Question;
 import com.backend.spring.payload.request.QuestionRequest;
 import com.backend.spring.payload.response.MessageResponse;
 import com.backend.spring.payload.response.QuestionResponse;
+import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.service.Question.IQuestionService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +25,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class QuestionController {
 
@@ -29,40 +32,45 @@ public class QuestionController {
     private IQuestionService iQuestionService;
 
     @GetMapping("/admin/question/get-all")
-    public ResponseEntity<List<QuestionResponse>> getAllQuestions() {
+    public ResponseEntity<?> getAllQuestions() {
         List<QuestionResponse> questionList = iQuestionService.getAllQuestions().stream().map(
                 QuestionMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
-        return new ResponseEntity<>(questionList, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Question.GET_DATA_SUCCESS, questionList),
+                HttpStatus.OK);
     }
 
     @GetMapping("/admin/question/get-by-id/{id}")
-    public ResponseEntity<QuestionResponse> getQuestionById(@PathVariable Integer id) {
+    public ResponseEntity<?> getQuestionById(@PathVariable("id") @Min(1) Integer id) {
         QuestionResponse question = QuestionMapper.mapFromEntityToResponse(iQuestionService.getQuestionById(id));
 
         if (question != null) {
-            return new ResponseEntity<>(question, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Question.GET_DATA_SUCCESS, question),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Question.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/admin/question/get-question-by-section/{sectionId}")
-    public ResponseEntity<List<QuestionResponse>> getQuestionsBySectionId(@PathVariable Integer sectionId) {
+    public ResponseEntity<?> getQuestionsBySectionId(@PathVariable("sectionId") @Min(1) Integer sectionId) {
         List<QuestionResponse> questionList = iQuestionService.getQuestionsBySectionId(sectionId).stream().map(
                 QuestionMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
         if (!questionList.isEmpty()) {
-            return new ResponseEntity<>(questionList, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Question.GET_DATA_SUCCESS, questionList),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(questionList, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Question.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/public/question/get-question-by-section/{sectionId}/enable")
-    public ResponseEntity<List<QuestionResponse>> getQuestionsBySectionIdEnable(@PathVariable Integer sectionId) {
+    public ResponseEntity<?> getQuestionsBySectionIdEnable(@PathVariable("sectionId") @Min(1) Integer sectionId) {
         List<QuestionResponse> questionList = iQuestionService.getQuestionsBySectionId(sectionId).stream().map(
                 QuestionMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
@@ -71,28 +79,32 @@ public class QuestionController {
                 item -> item.getQuestionStatus().equals(EStatus.ENABLE.getValue())
         ).collect(Collectors.toList());
 
-        if (!questionList.isEmpty()) {
-            return new ResponseEntity<>(questionResponseEnableList, HttpStatus.OK);
+        if (!questionResponseEnableList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Question.GET_DATA_SUCCESS, questionResponseEnableList),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(questionResponseEnableList, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Question.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/admin/question/get-question-by-group/{groupId}")
-    public ResponseEntity<List<QuestionResponse>> getQuestionsByGroupId(@PathVariable Integer groupId) {
+    public ResponseEntity<?> getQuestionsByGroupId(@PathVariable("groupId") @Min(1) Integer groupId) {
         List<QuestionResponse> questionList = iQuestionService.getQuestionsByGroupId(groupId).stream().map(
                 QuestionMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
         if (!questionList.isEmpty()) {
-            return new ResponseEntity<>(questionList, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Question.GET_DATA_SUCCESS, questionList),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(questionList, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Question.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/public/question/get-question-by-group/{groupId}/enable")
-    public ResponseEntity<List<QuestionResponse>> getQuestionsEnableByGroupId(@PathVariable Integer groupId) {
+    public ResponseEntity<?> getQuestionsEnableByGroupId(@PathVariable("groupId") @Min(1) Integer groupId) {
         List<QuestionResponse> questionList = iQuestionService.getQuestionsByGroupId(groupId).stream().map(
                 QuestionMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
@@ -101,74 +113,87 @@ public class QuestionController {
                 item -> item.getQuestionStatus().equals(EStatus.ENABLE.getValue())
         ).collect(Collectors.toList());
 
-        if (!questionList.isEmpty()) {
-            return new ResponseEntity<>(questionResponseEnableList, HttpStatus.OK);
+        if (!questionResponseEnableList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Question.GET_DATA_SUCCESS, questionResponseEnableList),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(questionResponseEnableList, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Question.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping("/admin/question/create")
-    public ResponseEntity<MessageResponse> createQuestion(@ModelAttribute @Valid QuestionRequest questionRequest) {
+    public ResponseEntity<?> createQuestion(@ModelAttribute @Valid QuestionRequest questionRequest) {
         try {
             Question createdQuestion = iQuestionService.createQuestion(questionRequest);
 
             if(createdQuestion != null) {
-                return ResponseEntity.ok(new MessageResponse("Thêm câu hỏi thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.Question.CREATE_SUCCESS),
+                        HttpStatus.CREATED);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Thêm câu hỏi thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.Question.CREATE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
 
         } catch (IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
 
     @PutMapping("/admin/question/update")
-    public ResponseEntity<MessageResponse> updateQuestion(@ModelAttribute @Valid QuestionRequest questionRequest) {
+    public ResponseEntity<?> updateQuestion(@ModelAttribute @Valid QuestionRequest questionRequest) {
         try {
             Question updatedQuestion = iQuestionService.updateQuestion(questionRequest);
 
             if (updatedQuestion != null) {
-                return ResponseEntity.ok(new MessageResponse("Cập nhật câu hỏi thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Question.UPDATE_SUCCESS),
+                        HttpStatus.OK);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Cập nhật câu hỏi thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Question.UPDATE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
         } catch (IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi khi cập nhật: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @DeleteMapping("/admin/question/delete/{id}")
-    public ResponseEntity<MessageResponse> deleteQuestion(@PathVariable Integer id) {
+    public ResponseEntity<?> deleteQuestion(@PathVariable("id") @Min(1) Integer id) {
         try {
             boolean result = iQuestionService.deleteQuestion(id);
 
             if(result) {
-                return ResponseEntity.ok(new MessageResponse("Xóa câu hỏi thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.Question.DELETE_SUCCESS),
+                        HttpStatus.OK);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Xoá câu hỏi thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.Question.DELETE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
         } catch (IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi khi xoá: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PutMapping("/admin/question/update-status/{id}")
-    public ResponseEntity<MessageResponse> updateQuestionStatus(@PathVariable Integer id, @RequestBody Integer newStatus) {
+    public ResponseEntity<?> updateQuestionStatus(@PathVariable("id") @Min(1) Integer id, @RequestBody Integer newStatus) {
         Question questionUpdate = iQuestionService.updateQuestionStatus(id, newStatus);
 
         if(questionUpdate != null) {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật trạng thái câu hỏi thành công!"), HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Question.UPDATE_STATUS_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật trạng thái câu hỏi thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Question.UPDATE_STATUS_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
 //  Học cải thiện
     @PostMapping("/public/question/get-by-section-and-type")
-    public ResponseEntity<List<QuestionResponse>> getQuestionsBySectionIdAndType(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> getQuestionsBySectionIdAndType(@RequestBody Map<String, Object> request) {
         Integer sectionId = (Integer) request.get("sectionId");
         String questionType = (String) request.get("questionType");
 
@@ -178,9 +203,11 @@ public class QuestionController {
         ).collect(Collectors.toList());
 
         if (!questionList.isEmpty()) {
-            return new ResponseEntity<>(questionList, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Question.GET_DATA_SUCCESS, questionList),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(questionList, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Question.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 

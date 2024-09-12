@@ -2,6 +2,7 @@ package com.backend.spring.controller;
 
 import com.backend.spring.constants.MessageConstant;
 import com.backend.spring.enums.EStatus;
+import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.mapper.GrammarMapper;
 import com.backend.spring.entity.Grammar;
 import com.backend.spring.payload.request.GrammarRequest;
@@ -22,7 +23,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class GrammarController {
 
@@ -31,17 +31,18 @@ public class GrammarController {
 
 //  Admin
     @GetMapping("/admin/grammar/get-all")
-    public ResponseData<List<GrammarResponse>> getAllGrammar() {
+    public ResponseEntity<?> getAllGrammar() {
         List<GrammarResponse> grammarList = iGrammarService.getAllGrammar().stream().map(
                 GrammarMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
-        return new ResponseData<>(HttpStatus.OK.value(), MessageConstant.Grammar.GET_DATA_SUCCESS, grammarList);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Grammar.GET_DATA_SUCCESS, grammarList),
+                HttpStatus.OK);
     }
 
 //  Người dùng
     @GetMapping("/public/grammar/get-all/enable")
-    public ResponseData<List<GrammarResponse>> getAllEnableGrammar() {
+    public ResponseEntity<?> getAllEnableGrammar() {
         List<GrammarResponse> grammarList = iGrammarService.getAllGrammar().stream().map(
                 GrammarMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
@@ -52,86 +53,102 @@ public class GrammarController {
                 .collect(Collectors.toList());
 
         if (!filteredGrammarList.isEmpty()) {
-            return new ResponseData<>(HttpStatus.OK.value(), MessageConstant.Grammar.GET_DATA_SUCCESS, filteredGrammarList);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Grammar.GET_DATA_SUCCESS, filteredGrammarList),
+                    HttpStatus.OK);
         } else {
-            return new ResponseData<>(HttpStatus.NOT_FOUND.value(), MessageConstant.Grammar.DATA_NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Grammar.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/admin/grammar/get-by-id/{id}")
-    public ResponseData<GrammarResponse> getGrammarById(@PathVariable("id") @Min(1) Integer id) {
+    public ResponseEntity<?> getGrammarById(@PathVariable("id") @Min(1) Integer id) {
         GrammarResponse grammarResponse = GrammarMapper.mapFromEntityToResponse(iGrammarService.getGrammarById(id));
 
         if (grammarResponse != null) {
-            return new ResponseData<>(HttpStatus.OK.value(), MessageConstant.Grammar.GET_DATA_SUCCESS, grammarResponse);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Grammar.GET_DATA_SUCCESS, grammarResponse),
+                    HttpStatus.OK);
         } else {
-            return new ResponseData<>(HttpStatus.NOT_FOUND.value(), MessageConstant.Grammar.DATA_NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Grammar.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/admin/grammar/get-name-by-id/{id}")
-    public ResponseData<?> getGrammarNameById(@PathVariable("id") @Min(1) Integer id) {
+    public ResponseEntity<?> getGrammarNameById(@PathVariable("id") @Min(1) Integer id) {
         String grammarName = iGrammarService.getGrammarNameById(id);
 
         if (grammarName != null) {
-            return new ResponseData<>(HttpStatus.OK.value(), MessageConstant.Grammar.GET_DATA_SUCCESS, grammarName);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Grammar.GET_DATA_SUCCESS, grammarName),
+                    HttpStatus.OK);
         } else {
-            return new ResponseData<>(HttpStatus.NOT_FOUND.value(), MessageConstant.Grammar.DATA_NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Grammar.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping("/admin/grammar/create")
-    public ResponseData<MessageResponse> createGrammar(@RequestBody @Valid GrammarRequest grammarRequest) {
+    public ResponseEntity<?> createGrammar(@RequestBody @Valid GrammarRequest grammarRequest) {
 
         // Kiểm tra xem tên grammar đã tồn tại chưa
         if (iGrammarService.isGrammarNameExists(grammarRequest.getGrammarName())) {
-            return new ResponseData<>(HttpStatus.BAD_REQUEST.value(), MessageConstant.Grammar.GRAMMAR_NAME_EXISTED);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_FIELD_EXIST.getValue(), MessageConstant.Grammar.GRAMMAR_NAME_EXISTED),
+                    HttpStatus.BAD_REQUEST);
         }
 
         Grammar createdGrammar = iGrammarService.createGrammar(grammarRequest);
 
         if(createdGrammar != null) {
-            return new ResponseData<>(HttpStatus.CREATED.value(), MessageConstant.Grammar.CREATE_SUCCESS);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.Grammar.CREATE_SUCCESS),
+                    HttpStatus.CREATED);
         } else {
-            return new ResponseData<>(HttpStatus.BAD_REQUEST.value(), MessageConstant.Grammar.CREATE_FAILED);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.Grammar.CREATE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
     @PutMapping("/admin/grammar/update")
-    public ResponseData<MessageResponse> updateGrammar(@RequestBody @Valid GrammarRequest grammarRequest) {
+    public ResponseEntity<?> updateGrammar(@RequestBody @Valid GrammarRequest grammarRequest) {
         // Kiểm tra trùng lặp tên grammar (nếu tên đã thay đổi)
         if (iGrammarService.isGrammarNameExists(grammarRequest.getGrammarName())) {
-            return new ResponseData<>(HttpStatus.BAD_REQUEST.value(), MessageConstant.Grammar.GRAMMAR_NAME_EXISTED);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_FIELD_EXIST.getValue(), MessageConstant.Grammar.GRAMMAR_NAME_EXISTED),
+                    HttpStatus.BAD_REQUEST);
         }
 
         Grammar updatedGrammar = iGrammarService.updateGrammar(grammarRequest);
 
         if (updatedGrammar != null) {
-            return new ResponseData<>(HttpStatus.NO_CONTENT.value(), MessageConstant.Grammar.UPDATE_SUCCESS);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Grammar.UPDATE_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseData<>(HttpStatus.BAD_REQUEST.value(), MessageConstant.Grammar.UPDATE_FAILED);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Grammar.UPDATE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
     @DeleteMapping("/admin/grammar/delete/{id}")
-    public ResponseData<MessageResponse> deleteGrammar(@PathVariable("id") @Min(1) Integer id) {
+    public ResponseEntity<?> deleteGrammar(@PathVariable("id") @Min(1) Integer id) {
         boolean result = iGrammarService.deleteGrammar(id);
 
         if(result) {
-             return new ResponseData<>(HttpStatus.NO_CONTENT.value(), MessageConstant.Grammar.DELETE_SUCCESS);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.Grammar.DELETE_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseData<>(HttpStatus.BAD_REQUEST.value(), MessageConstant.Grammar.DELETE_FAILED);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.Grammar.DELETE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
     @PutMapping("/admin/grammar/update-status/{id}")
-    public ResponseData<MessageResponse> updateGrammarStatus(@PathVariable("id") @Min(1) Integer grammarId, @RequestBody Integer newStatus) {
+    public ResponseEntity<?> updateGrammarStatus(@PathVariable("id") @Min(1) Integer grammarId, @RequestBody Integer newStatus) {
        Grammar grammar = iGrammarService.updateGrammarStatus(grammarId, newStatus);
 
        if(grammar != null) {
-           return new ResponseData<>(HttpStatus.NO_CONTENT.value(), MessageConstant.Grammar.UPDATE_STATUS_SUCCESS);
+           return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Grammar.UPDATE_STATUS_SUCCESS),
+                   HttpStatus.OK);
        } else {
-           return new ResponseData<>(HttpStatus.BAD_REQUEST.value(), MessageConstant.Grammar.UPDATE_STATUS_FAILED);
+           return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Grammar.UPDATE_STATUS_FAILED),
+                   HttpStatus.BAD_REQUEST);
        }
     }
 

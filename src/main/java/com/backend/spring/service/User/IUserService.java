@@ -1,9 +1,12 @@
 package com.backend.spring.service.User;
 
 import com.backend.spring.entity.User;
+import com.backend.spring.exception.NotFoundException;
 import com.backend.spring.payload.request.ChangePasswordRequest;
+import com.backend.spring.payload.request.ProfileImageRequest;
 import com.backend.spring.payload.request.ProfileRequest;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface IUserService {
@@ -13,5 +16,6 @@ public interface IUserService {
     User updateStatus(Integer userId, Integer newStatus);
     Integer getUserIdByUserName(String userName);
     User updateProfile(ProfileRequest profileRequest);
+    User updateImageProfile(ProfileImageRequest profileImageRequest) throws IOException, NotFoundException;
     User updatePassword(ChangePasswordRequest changePasswordRequest);
 }

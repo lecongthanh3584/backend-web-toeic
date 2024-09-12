@@ -15,8 +15,8 @@ public class ChangePasswordRequest {
     private Integer userId;
 
     @NotBlank(message = "Mật khẩu cũ không được trống!")
-    private String oldPassWord;
+    private String oldPassword;
 
     @NotBlank(message = "Mật khẩu mới không được trống!")
-    private String newPassWord;
+    private String newPassword;
 }

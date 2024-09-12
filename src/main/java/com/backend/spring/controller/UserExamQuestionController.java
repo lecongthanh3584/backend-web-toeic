@@ -1,11 +1,15 @@
 package com.backend.spring.controller;
 
+import com.backend.spring.constants.MessageConstant;
+import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.mapper.UserExamQuestionMapper;
 import com.backend.spring.entity.UserExamQuestion;
 import com.backend.spring.payload.request.UserExamQuestionRequest;
 import com.backend.spring.payload.response.MessageResponse;
 import com.backend.spring.payload.response.UserExamQuestionResponse;
+import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.service.UserExamQuestion.IUserExamQuestionService;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +21,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class UserExamQuestionController {
 
@@ -26,37 +29,41 @@ public class UserExamQuestionController {
 
     // Lấy tất cả kết quả
     @GetMapping("/admin/user-exam-questions/get-all")
-    public ResponseEntity<List<UserExamQuestionResponse>> getAll() {
+    public ResponseEntity<?> getAll() {
         List<UserExamQuestionResponse> results = iUserExamQuestionService.getAll().stream().map(
                 UserExamQuestionMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
-        return new ResponseEntity<>(results, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExamQuestion.GET_DATA_SUCCESS, results),
+                HttpStatus.OK);
     }
 
     // Nộp bài
     @PostMapping("/user/user-exam-questions/submit-all")
-    public ResponseEntity<MessageResponse> submitAllUserExamQuestions(@RequestBody List<UserExamQuestionRequest> userExamQuestionRequestList) {
+    public ResponseEntity<?> submitAllUserExamQuestions(@RequestBody List<UserExamQuestionRequest> userExamQuestionRequestList) {
         iUserExamQuestionService.submitAllUserExamQuestions(userExamQuestionRequestList);
-        return ResponseEntity.ok(new MessageResponse("Nộp bài thành công"));
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.UserExamQuestion.SUBMIT_SUCCESS),
+                HttpStatus.OK);
     }
 
     // Lấy danh sách câu hỏi từ user_exam_id
     @GetMapping("/user/user-exam-questions/get-by-user-exam/{userExamId}")
-    public ResponseEntity<List<UserExamQuestionResponse>> getQuestionsByUserExamId(@PathVariable Integer userExamId) {
+    public ResponseEntity<?> getQuestionsByUserExamId(@PathVariable("userExamId") @Min(1) Integer userExamId) {
         List<UserExamQuestionResponse> userExamQuestionsList = iUserExamQuestionService.getQuestionsByUserExamId(userExamId).stream().map(
                 UserExamQuestionMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
         if (!userExamQuestionsList.isEmpty()) {
-            return new ResponseEntity<>(userExamQuestionsList, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExamQuestion.GET_DATA_SUCCESS, userExamQuestionsList),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(userExamQuestionsList, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.UserExamQuestion.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/user/user-exam-questions/get-by-user-exam/{userExamId}/grouped")
-    public ResponseEntity<Map<String, List<UserExamQuestion>>> getQuestionsByUserExamIdGroupedByType(@PathVariable Integer userExamId) {
+    public ResponseEntity<?> getQuestionsByUserExamIdGroupedByType(@PathVariable("userExamId") @Min(1) Integer userExamId) {
         List<UserExamQuestion> userExamQuestionsList = iUserExamQuestionService.getQuestionsByUserExamId(userExamId);
 
         if (!userExamQuestionsList.isEmpty()) {
@@ -79,18 +86,20 @@ public class UserExamQuestionController {
                     .stream()
                     .sorted(Map.Entry.comparingByKey())
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-            return new ResponseEntity<>(sortedGroupedQuestions, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExamQuestion.GET_DATA_SUCCESS, sortedGroupedQuestions),
+                    HttpStatus.OK);
 
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.UserExamQuestion.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
 //  Thống kê độ chính xác từng phân loại câu hỏi
     @GetMapping("/user/user-exam-questions/accuracy-by-part/{questionPart}/user/{userId}")
-    public ResponseEntity<Map<String, Double>> getAccuracyByQuestionTypeForUser(
-            @PathVariable("questionPart") int questionPart,
-            @PathVariable("userId") Integer userId)
+    public ResponseEntity<?> getAccuracyByQuestionTypeForUser(
+            @PathVariable("questionPart") @Min(1) int questionPart,
+            @PathVariable("userId") @Min(1) Integer userId)
     {
 
         List<UserExamQuestion> userExamQuestionsList = iUserExamQuestionService.getUserExamQuestionsByUserId(userId);
@@ -127,10 +136,11 @@ public class UserExamQuestionController {
                 accuracyByType.put(entry.getKey(), accuracy);
             }
 
-            return new ResponseEntity<>(accuracyByType, HttpStatus.OK);
-
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExamQuestion.GET_DATA_SUCCESS, accuracyByType),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.UserExamQuestion.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 }

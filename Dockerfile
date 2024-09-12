@@ -10,12 +10,7 @@ WORKDIR /app
 # Sao chép file .jar đã build từ máy local vào thư mục /app trong container
 COPY ./target/backend-0.0.1-SNAPSHOT.jar app.jar
 
-# Thiết lập biến môi trường để kết nối đến MySQL
-ENV SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/webtoeic
-ENV SPRING_DATASOURCE_USERNAME=root
-ENV SPRING_DATASOURCE_PASSWORD=k65hust2020
-
-# Expose cổng mà ứng dụng Spring Boot(container) sẽ chạy trên
+# Expose cổng mà ứng dụng Spring Boot(container) sẽ chạy
 EXPOSE 9004
 
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

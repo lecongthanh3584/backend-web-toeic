@@ -179,4 +179,10 @@ public class SectionService implements ISectionService {
         return sectionRepository.existsByName(name);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isSectionNameExistsAndIdNot(String name, Integer id) {
+        return sectionRepository.existsByNameAndIdNot(name, id);
+    }
+
 }

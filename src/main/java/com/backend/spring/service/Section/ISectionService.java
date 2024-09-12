@@ -15,4 +15,6 @@ public interface ISectionService {
     boolean deleteSection(Integer id) throws IOException;
     String getSectionNameById(Integer sectionId);
     boolean isSectionNameExists(String name);
+    boolean isSectionNameExistsAndIdNot(String name, Integer id);
+
 }

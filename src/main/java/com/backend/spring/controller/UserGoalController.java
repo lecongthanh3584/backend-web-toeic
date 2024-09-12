@@ -1,12 +1,16 @@
 package com.backend.spring.controller;
 
+import com.backend.spring.constants.MessageConstant;
+import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.mapper.UserGoalMapper;
 import com.backend.spring.entity.UserGoal;
 import com.backend.spring.payload.request.UserGoalRequest;
 import com.backend.spring.payload.response.MessageResponse;
 import com.backend.spring.payload.response.UserGoalResponse;
+import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.service.UserGoal.IUserGoalService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +24,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class UserGoalController {
 
@@ -28,77 +31,77 @@ public class UserGoalController {
     private IUserGoalService iUserGoalService;
 
     @PostMapping("/user/user-goal/create")
-    public ResponseEntity<MessageResponse> createUserGoal(@RequestBody @Valid UserGoalRequest userGoalRequest) {
+    public ResponseEntity<?> createUserGoal(@RequestBody @Valid UserGoalRequest userGoalRequest) {
         UserGoal createdUserGoal = iUserGoalService.createUserGoal(userGoalRequest);
 
         if(createdUserGoal != null) {
-            return ResponseEntity.ok(new MessageResponse("Thêm điểm mục tiêu thành công!"));
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.UserGoal.CREATE_SUCCESS),
+                    HttpStatus.CREATED);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Thêm điểm mục tiêu thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.UserGoal.CREATE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
-
     }
 
     @GetMapping("/user/user-goal/get-by-id/{id}")
-    public ResponseEntity<UserGoalResponse> getUserGoalById(@PathVariable("id") Integer userGoalId) {
+    public ResponseEntity<?> getUserGoalById(@PathVariable("id") @Min(1) Integer userGoalId) {
         UserGoalResponse userGoal = UserGoalMapper.mapFromEntityToResponse(iUserGoalService.getUserGoalById(userGoalId));
 
         if (userGoal != null) {
-            return new ResponseEntity<>(userGoal, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserGoal.GET_DATA_SUCCESS, userGoal),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.UserGoal.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/admin/user-goal/get-all")
-    public ResponseEntity<List<UserGoalResponse>> getAllUserGoals() {
+    public ResponseEntity<?> getAllUserGoals() {
         List<UserGoalResponse> userGoalList = iUserGoalService.getAllUserGoals().stream().map(
                 UserGoalMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
-        return new ResponseEntity<>(userGoalList, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserGoal.GET_DATA_SUCCESS, userGoalList),
+                HttpStatus.OK);
     }
 
     @GetMapping("/user/user-goal/get-by-user/{userId}")
-    public ResponseEntity<UserGoalResponse> getUserGoalByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<?> getUserGoalByUserId(@PathVariable("userId") @Min(1) Integer userId) {
         UserGoalResponse userGoal = UserGoalMapper.mapFromEntityToResponse(iUserGoalService.getUserGoalByUserId(userId));
 
         if (userGoal != null) {
-            return new ResponseEntity<>(userGoal, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserGoal.GET_DATA_SUCCESS, userGoal),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.UserGoal.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/user/user-goal/has-user-goal/{userId}")
-    public ResponseEntity<?> hasUserGoalWithUserId(@PathVariable Integer userId) {
+    public ResponseEntity<?> hasUserGoalWithUserId(@PathVariable("userId") @Min(1) Integer userId) {
         try {
             boolean hasUserGoal = iUserGoalService.hasUserGoalWithUserId(userId);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("hasUserGoal", hasUserGoal);
-            response.put("message", "Người dùng đã thiết lập điểm mục tiêu");
-
-            return ResponseEntity.ok(response);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserGoal.USER_HAS_SET, hasUserGoal),
+                    HttpStatus.OK);
 
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Error: " + e.getMessage());
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PutMapping("/user/user-goal/update")
-    public ResponseEntity<MessageResponse> updateUserGoalByUserId(@RequestBody @Valid UserGoalRequest userGoalRequest) {
+    public ResponseEntity<?> updateUserGoalByUserId(@RequestBody @Valid UserGoalRequest userGoalRequest) {
         UserGoal updatedUserGoal = iUserGoalService.updateUserGoalByUserId(userGoalRequest);
 
         if (updatedUserGoal != null) {
-            return ResponseEntity.ok(new MessageResponse("Cập nhật điểm mục tiêu thành công!"));
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.UserGoal.UPDATE_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật điểm mục tiêu thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.UserGoal.UPDATE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 }

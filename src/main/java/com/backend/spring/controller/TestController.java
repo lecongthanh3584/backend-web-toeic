@@ -1,6 +1,8 @@
 package com.backend.spring.controller;
 
+import com.backend.spring.constants.MessageConstant;
 import com.backend.spring.enums.EStatus;
+import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.mapper.QuestionMapper;
 import com.backend.spring.mapper.TestMapper;
 import com.backend.spring.entity.Test;
@@ -8,8 +10,10 @@ import com.backend.spring.payload.request.TestRequest;
 import com.backend.spring.payload.response.MessageResponse;
 import com.backend.spring.payload.response.QuestionResponse;
 import com.backend.spring.payload.response.TestResponse;
+import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.service.Test.ITestService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +26,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class TestController {
 
@@ -30,98 +33,113 @@ public class TestController {
     private ITestService iTestService;
 
     @GetMapping("/admin/test/get-all")
-    public ResponseEntity<List<TestResponse>> getAllTests() {
+    public ResponseEntity<?> getAllTests() {
         List<TestResponse> testList = iTestService.getAllTests().stream().map(
                 TestMapper::MapFromEntityToResponse
         ).collect(Collectors.toList());
 
-        return new ResponseEntity<>(testList, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Test.GET_DATA_SUCCESS, testList),
+                HttpStatus.OK);
     }
 
     @GetMapping("/admin/test/get-by-id/{id}")
-    public ResponseEntity<TestResponse> getTestById(@PathVariable("id") Integer testId) {
+    public ResponseEntity<?> getTestById(@PathVariable("id") @Min(1) Integer testId) {
         TestResponse test = TestMapper.MapFromEntityToResponse(iTestService.getTestById(testId));
 
         if (test != null) {
-            return new ResponseEntity<>(test, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Test.GET_DATA_SUCCESS, test),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Test.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping("/admin/test/create")
-    public ResponseEntity<MessageResponse> createTest(@RequestBody @Valid TestRequest testRequest) {
+    public ResponseEntity<?> createTest(@RequestBody @Valid TestRequest testRequest) {
         Test createdTest = iTestService.createTest(testRequest);
 
         if (createdTest != null) {
-            return ResponseEntity.ok(new MessageResponse("Thêm bài kiểm tra thành công!"));
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.Test.CREATE_SUCCESS),
+                    HttpStatus.CREATED);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Thêm bài kiểm tra thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.Test.CREATE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
     @PutMapping("/admin/test/update")
-    public ResponseEntity<MessageResponse> updateTest(@RequestBody @Valid TestRequest testRequest) {
+    public ResponseEntity<?> updateTest(@RequestBody @Valid TestRequest testRequest) {
         Test updatedTest = iTestService.updateTest(testRequest);
 
         if (updatedTest != null) {
-            return ResponseEntity.ok(new MessageResponse("Cập nhật bài kiểm tra thành công!"));
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Test.UPDATE_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật bài kiểm tra thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Test.UPDATE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
     @DeleteMapping("/admin/test/delete/{id}")
-    public ResponseEntity<MessageResponse> deleteTest(@PathVariable Integer id) {
+    public ResponseEntity<?> deleteTest(@PathVariable("id") @Min(1) Integer id) {
         boolean result = iTestService.deleteTest(id);
 
         if(result) {
-            return ResponseEntity.ok(new MessageResponse("Xóa bài kiểm tra thành công!"));
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.Test.DELETE_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Xoá bài kiểm tra thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.Test.DELETE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
 
     }
 
     @PutMapping("/admin/test/update-status/{id}")
-    public ResponseEntity<MessageResponse> updateTestStatus(@PathVariable("id") Integer testId, @RequestBody Integer newStatus) {
+    public ResponseEntity<?> updateTestStatus(@PathVariable("id") @Min(1) Integer testId, @RequestBody Integer newStatus) {
         Test updateTest = iTestService.updateTestStatus(testId, newStatus);
 
         if(updateTest != null) {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật status của bài test thành công!"), HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Test.UPDATE_STATUS_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật status của bài test thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Test.UPDATE_STATUS_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
     @PutMapping("/admin/test/update-participant/{id}")
-    public ResponseEntity<MessageResponse> updateTestParticipants(@PathVariable("id") Integer testId, @RequestBody Integer newParticipants) {
+    public ResponseEntity<?> updateTestParticipants(@PathVariable("id") @Min(1) Integer testId, @RequestBody Integer newParticipants) {
         Test testUpdate = iTestService.updateTestParticipants(testId, newParticipants);
 
         if(testUpdate != null) {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật người tham gia test thành công!"), HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Test.UPDATE_PARTICIPANT_SUCCESS),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new MessageResponse("Cập nhật người tham gia test thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Test.UPDATE_PARTICIPANT_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
     // Get tests by sectionId (Admin)
     @GetMapping("/admin/test/get-by-section/{sectionId}")
-    public ResponseEntity<List<TestResponse>> getTestsBySectionId(@PathVariable Integer sectionId) {
+    public ResponseEntity<?> getTestsBySectionId(@PathVariable("sectionId") @Min(1) Integer sectionId) {
         List<TestResponse> testList = iTestService.getTestsBySectionId(sectionId).stream().map(
                 TestMapper::MapFromEntityToResponse
         ).collect(Collectors.toList());
 
         if (!testList.isEmpty()) {
-            return new ResponseEntity<>(testList, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Test.GET_DATA_SUCCESS, testList),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(testList, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Test.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
-    // Get tests by sectionId (Người dùng)
+    // Get tests by sectionId (User)
     @GetMapping("/public/test/get-by-section/{sectionId}/enable")
-    public ResponseEntity<List<TestResponse>> getEnableTestsBySectionId(@PathVariable Integer sectionId) {
+    public ResponseEntity<?> getEnableTestsBySectionId(@PathVariable("sectionId") @Min(1) Integer sectionId) {
         List<TestResponse> testList = iTestService.getTestsBySectionId(sectionId).stream().map(
                 TestMapper::MapFromEntityToResponse
         ).collect(Collectors.toList());
@@ -132,50 +150,58 @@ public class TestController {
                 .collect(Collectors.toList());
 
         if (!filteredTests.isEmpty()) {
-            return new ResponseEntity<>(filteredTests, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Test.GET_DATA_SUCCESS, filteredTests),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(filteredTests, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Test.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     /** Thêm câu hỏi vào test cụ thể **/
     @PutMapping("/admin/test/add-questions-to-test/{id}")
-    public ResponseEntity<MessageResponse> addQuestionsToTest(@PathVariable("id") Integer testId, @RequestBody List<Integer> questionIds) {
+    public ResponseEntity<?> addQuestionsToTest(@PathVariable("id") @Min(1) Integer testId, @RequestBody List<Integer> questionIds) {
         Test updatedTest = iTestService.updateQuestionsToTest(testId, questionIds);
 
         if (updatedTest != null) {
-            return ResponseEntity.ok(new MessageResponse("Cập nhật câu hỏi bài kiểm tra thành công!"));
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Test.UPDATE_QUESTION_TO_TEST_SUCCESS),
+                    HttpStatus.OK);
         } else {
-           return new ResponseEntity<>(new MessageResponse("Cập nhật câu hỏi bài kiểm tra thất bại!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Test.UPDATE_QUESTION_TO_TEST_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping("/admin/test/get-test-name-by-id/{id}")
-    public ResponseEntity<String> getTestNameByTestId(@PathVariable("id") Integer testId) {
+    public ResponseEntity<?> getTestNameByTestId(@PathVariable("id") @Min(1) Integer testId) {
         String testName = iTestService.getTestNameByTestId(testId);
 
         if (testName != null) {
-            return new ResponseEntity<>(testName, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Test.GET_DATA_SUCCESS, testName),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Test.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/admin/test/get-question-by-test/{testId}")
-    public ResponseEntity<Set<QuestionResponse>> getQuestionsByTestId(@PathVariable Integer testId) {
+    public ResponseEntity<?> getQuestionsByTestId(@PathVariable("testId") @Min(1) Integer testId) {
         Set<QuestionResponse> questions = iTestService.getQuestionsByTestId(testId).stream().map(
                 QuestionMapper::mapFromEntityToResponse
         ).collect(Collectors.toSet());
 
         if (!questions.isEmpty()) {
-            return new ResponseEntity<>(questions, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Test.GET_DATA_SUCCESS, questions),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(questions, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Test.DATA_NOT_FOUND, questions),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/public/test/get-question-by-test/{testId}/enable")
-    public ResponseEntity<Set<QuestionResponse>> getQuestionsEnableByTestId(@PathVariable Integer testId) {
+    public ResponseEntity<?> getQuestionsEnableByTestId(@PathVariable("testId") @Min(1) Integer testId) {
         Set<QuestionResponse> questions = iTestService.getQuestionsByTestId(testId).stream().map(
                 QuestionMapper::mapFromEntityToResponse
         ).collect(Collectors.toSet());
@@ -185,16 +211,20 @@ public class TestController {
         ).collect(Collectors.toSet());
 
         if (!questions.isEmpty()) {
-            return new ResponseEntity<>(questionResponsesEnable, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Test.GET_DATA_SUCCESS, questionResponsesEnable),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(questionResponsesEnable, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Test.DATA_NOT_FOUND, questionResponsesEnable),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/public/test/question-usage/{questionId}")
-    public ResponseEntity<Long> getQuestionUsageCount(@PathVariable Integer questionId) {
+    public ResponseEntity<?> getQuestionUsageCount(@PathVariable("questionId") @Min(1) Integer questionId) {
         long count = iTestService.countQuestionUsage(questionId);
-        return new ResponseEntity<>(count, HttpStatus.OK);
+
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Test.GET_DATA_SUCCESS, count),
+                HttpStatus.OK);
     }
 
 

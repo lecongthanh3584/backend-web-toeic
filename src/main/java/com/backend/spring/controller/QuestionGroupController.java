@@ -1,11 +1,15 @@
 package com.backend.spring.controller;
 
+import com.backend.spring.constants.MessageConstant;
+import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.mapper.QuestionGroupMapper;
 import com.backend.spring.entity.QuestionGroup;
 import com.backend.spring.payload.request.QuestionGroupRequest;
 import com.backend.spring.payload.response.MessageResponse;
 import com.backend.spring.payload.response.QuestionGroupResponse;
+import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.service.QuestionGroup.IQuestionGroupService;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +24,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class QuestionGroupController {
 
@@ -28,22 +31,25 @@ public class QuestionGroupController {
     private IQuestionGroupService iQuestionGroupService;
 
     @GetMapping("/admin/question-group/get-all")
-    public ResponseEntity<List<QuestionGroupResponse>> getAllQuestionGroups() {
+    public ResponseEntity<?> getAllQuestionGroups() {
         List<QuestionGroupResponse> questionGroupList = iQuestionGroupService.getAllQuestionGroups().stream().map(
                 QuestionGroupMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
-        return new ResponseEntity<>(questionGroupList, HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.QuestionGroup.GET_DATA_SUCCESS, questionGroupList),
+                HttpStatus.OK);
     }
 
     @GetMapping("/admin/question-group/get-by-id/{id}")
-    public ResponseEntity<QuestionGroupResponse> getQuestionGroupById(@PathVariable Integer id) {
+    public ResponseEntity<?> getQuestionGroupById(@PathVariable("id") @Min(1) Integer id) {
         QuestionGroupResponse questionGroup = QuestionGroupMapper.mapFromEntityToResponse(iQuestionGroupService.getQuestionGroupById(id));
 
         if (questionGroup != null) {
-            return new ResponseEntity<>(questionGroup, HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.QuestionGroup.GET_DATA_SUCCESS, questionGroup),
+                    HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.QuestionGroup.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
@@ -55,53 +61,53 @@ public class QuestionGroupController {
             if(createdGroup != null) {
                 Integer createdGroupId = createdGroup.getGroupId(); // Lấy ID của đối tượng vừa tạo
 
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("groupId", createdGroupId);
-                response.put("message", "Thêm nhóm câu hỏi thành công!");
-
-                return new ResponseEntity<>(response, HttpStatus.OK);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.QuestionGroup.CREATE_SUCCESS, createdGroupId),
+                        HttpStatus.CREATED);
             } else {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "Thêm nhóm câu hỏi thất bại!");
-
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.QuestionGroup.CREATE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
 
         } catch (IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi ở: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PutMapping("/admin/question-group/update")
-    public ResponseEntity<MessageResponse> updateQuestionGroup(@ModelAttribute QuestionGroupRequest questionGroupRequest) {
+    public ResponseEntity<?> updateQuestionGroup(@ModelAttribute QuestionGroupRequest questionGroupRequest) {
         try {
             QuestionGroup updatedGroup = iQuestionGroupService.updateQuestionGroup(questionGroupRequest);
 
             if (updatedGroup != null) {
-                return ResponseEntity.ok(new MessageResponse("Cập nhật nhóm câu hỏi thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.QuestionGroup.UPDATE_SUCCESS),
+                        HttpStatus.OK);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Cập nhật nhóm câu hỏi thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.QuestionGroup.UPDATE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
 
         } catch (IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Lỗi khi cập nhật nhóm câu hỏi: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @DeleteMapping("/admin/question-group/delete/{id}")
-    public ResponseEntity<MessageResponse> deleteQuestionGroup(@PathVariable Integer id) {
+    public ResponseEntity<?> deleteQuestionGroup(@PathVariable("id") @Min(1) Integer id) {
         try {
             boolean result = iQuestionGroupService.deleteQuestionGroup(id);
 
             if(result) {
-                return ResponseEntity.ok(new MessageResponse("Xóa nhóm câu hỏi thành công!"));
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.QuestionGroup.DELETE_SUCCESS),
+                        HttpStatus.OK);
             } else {
-                return new ResponseEntity<>(new MessageResponse("Xoá nhóm câu hỏi thất bại!"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.QuestionGroup.DELETE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
         } catch (IOException e) {
-            return new ResponseEntity<>(new MessageResponse("Có lỗi ở: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }

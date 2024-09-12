@@ -2,6 +2,7 @@ package com.backend.spring.controller;
 
 import com.backend.spring.constants.MessageConstant;
 import com.backend.spring.enums.EStatus;
+import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.mapper.FreeMaterialMapper;
 import com.backend.spring.entity.FreeMaterial;
 import com.backend.spring.payload.request.FreeMaterialRequest;
@@ -28,7 +29,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 public class FreeMaterialController {
 
@@ -37,17 +37,18 @@ public class FreeMaterialController {
 
 //  Admin
     @GetMapping("/admin/free-material/get-all")
-    public ResponseData<List<FreeMaterialResponse>> getAllFreeMaterials() {
+    public ResponseEntity<?> getAllFreeMaterials() {
         List<FreeMaterialResponse> freeMaterialList = iFreeMaterialService.getAllFreeMaterials().stream().map(
                 FreeMaterialMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
 
-        return new ResponseData<>(HttpStatus.OK.value(), MessageConstant.FreeMaterial.GET_DATA_SUCCESS, freeMaterialList);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.FreeMaterial.GET_DATA_SUCCESS,
+                freeMaterialList), HttpStatus.OK);
     }
 
 //  Người dùng
     @GetMapping("/public/free-material/get-all/enable")
-    public ResponseData<List<FreeMaterialResponse>> getAllEnableFreeMaterials() {
+    public ResponseEntity<?> getAllEnableFreeMaterials() {
         List<FreeMaterialResponse> freeMaterialList = iFreeMaterialService.getAllFreeMaterials().stream().map(
                 FreeMaterialMapper::mapFromEntityToResponse
         ).collect(Collectors.toList());
@@ -58,84 +59,100 @@ public class FreeMaterialController {
                 .collect(Collectors.toList());
 
         if (!filteredFreeMaterials.isEmpty()) {
-            return new ResponseData<>(HttpStatus.OK.value(), MessageConstant.FreeMaterial.GET_DATA_SUCCESS, filteredFreeMaterials);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.FreeMaterial.GET_DATA_SUCCESS, filteredFreeMaterials),
+                    HttpStatus.OK);
         } else {
-            return new ResponseData<>(HttpStatus.NOT_FOUND.value(), MessageConstant.FreeMaterial.DATA_NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.FreeMaterial.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/admin/free-material/get-by-id/{id}")
-    public ResponseData<FreeMaterialResponse> getFreeMaterialById(@PathVariable("id") @Min(1) Integer id) {
+    public ResponseEntity<?> getFreeMaterialById(@PathVariable("id") @Min(1) Integer id) {
         FreeMaterialResponse freeMaterial = FreeMaterialMapper.mapFromEntityToResponse(iFreeMaterialService.getFreeMaterialById(id));
 
         if (freeMaterial != null) {
-            return new ResponseData<>(HttpStatus.OK.value(), MessageConstant.FreeMaterial.GET_DATA_SUCCESS, freeMaterial);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.FreeMaterial.GET_DATA_SUCCESS, freeMaterial),
+                    HttpStatus.OK);
         } else {
-            return new ResponseData<>(HttpStatus.NOT_FOUND.value(), MessageConstant.FreeMaterial.DATA_NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.FreeMaterial.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping("/admin/free-material/create")
-    public ResponseData<MessageResponse> createFreeMaterial(@ModelAttribute @Valid FreeMaterialRequest freeMaterialRequest) {
+    public ResponseEntity<?> createFreeMaterial(@ModelAttribute @Valid FreeMaterialRequest freeMaterialRequest) {
         try {
             FreeMaterial createdFreeMaterial = iFreeMaterialService.createFreeMaterial(freeMaterialRequest);
 
             if(createdFreeMaterial != null) {
-                return new ResponseData<>(HttpStatus.CREATED.value(), MessageConstant.FreeMaterial.ADD_NEW_SUCCESS);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.FreeMaterial.ADD_NEW_SUCCESS),
+                        HttpStatus.CREATED);
             } else {
-                return new ResponseData<>(HttpStatus.BAD_REQUEST.value(), MessageConstant.FreeMaterial.ADD_NEW_FAILED);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.FreeMaterial.ADD_NEW_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | java.io.IOException e) {
-            return new ResponseData<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PutMapping("/admin/free-material/update")
-    public ResponseData<?> updateFreeMaterial(@ModelAttribute @Valid FreeMaterialRequest freeMaterialRequest) {
+    public ResponseEntity<?> updateFreeMaterial(@ModelAttribute @Valid FreeMaterialRequest freeMaterialRequest) {
         try {
             FreeMaterial updatedFreeMaterial = iFreeMaterialService.updateFreeMaterial(freeMaterialRequest);
 
             if (updatedFreeMaterial != null) {
-                return new ResponseData<>(HttpStatus.NO_CONTENT.value(), MessageConstant.FreeMaterial.UPDATE_SUCCESS);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.FreeMaterial.UPDATE_SUCCESS),
+                        HttpStatus.OK);
             } else {
-                return new ResponseData<>(HttpStatus.BAD_REQUEST.value(), MessageConstant.FreeMaterial.UPDATE_FAILED);
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.FreeMaterial.UPDATE_FAILED),
+                        HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | java.io.IOException e) {
-            return new ResponseData<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @DeleteMapping("/admin/free-material/delete/{id}")
-    public ResponseData<MessageResponse> deleteFreeMaterial(@PathVariable("id") @Min(1) Integer id) {
+    public ResponseEntity<?> deleteFreeMaterial(@PathVariable("id") @Min(1) Integer id) {
        try {
            boolean result = iFreeMaterialService.deleteFreeMaterial(id);
 
            if(result) {
-               return new ResponseData<>(HttpStatus.NO_CONTENT.value(), MessageConstant.FreeMaterial.DELETE_SUCCESS);
+               return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.FreeMaterial.DELETE_SUCCESS),
+                       HttpStatus.OK);
            } else {
-               return new ResponseData<>(HttpStatus.BAD_REQUEST.value(), MessageConstant.FreeMaterial.DELETE_FAILED);
+               return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.FreeMaterial.DELETE_FAILED),
+                       HttpStatus.BAD_REQUEST);
            }
        } catch (IOException | java.io.IOException e) {
-           return new ResponseData<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
+           return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), e.getMessage()),
+                   HttpStatus.INTERNAL_SERVER_ERROR);
        }
     }
 
     @PutMapping("/admin/free-material/update-status/{id}")
-    public ResponseData<MessageResponse> updateFreeMaterialStatus(@PathVariable("id") @Min(1) Integer id, @RequestBody Integer newStatus) {
+    public ResponseEntity<?> updateFreeMaterialStatus(@PathVariable("id") @Min(1) Integer id, @RequestBody Integer newStatus) {
         boolean result = iFreeMaterialService.updateFreeMaterialStatus(id, newStatus);
 
         if(result) {
-            return new ResponseData<>(HttpStatus.NO_CONTENT.value(), MessageConstant.FreeMaterial.UPDATE_STATUS_SUCCESS);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.FreeMaterial.UPDATE_STATUS_SUCCESS) ,
+                    HttpStatus.OK);
         }else {
-            return new ResponseData<>(HttpStatus.BAD_REQUEST.value(), MessageConstant.FreeMaterial.UPDATE_STATUS_FAILED);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.FreeMaterial.UPDATE_STATUS_FAILED) ,
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping("/admin/free-material/total")
-    public ResponseData<Long> countTotalFreeMaterials() {
+    public ResponseEntity<?> countTotalFreeMaterials() {
         long totalFreeMaterials = iFreeMaterialService.countTotalFreeMaterials();
 
-        return new ResponseData<>(HttpStatus.OK.value(), MessageConstant.FreeMaterial.GET_DATA_SUCCESS, totalFreeMaterials);
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.FreeMaterial.GET_DATA_SUCCESS, totalFreeMaterials),
+                HttpStatus.OK);
     }
 
     @GetMapping("/public/free-material/download/{filename}")
