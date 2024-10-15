@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.Comment;
+import com.backend.spring.entities.Comment;
 import com.backend.spring.payload.response.CommentResponse;
 
 public class CommentMapper {
@@ -13,7 +13,8 @@ public class CommentMapper {
                 comment.getCommentId(),
                 comment.getText(),
                 comment.getUser(),
-                comment.getDate(),
+                comment.getCreatedAt(),
+                comment.getUpdatedAt(),
                 comment.getParentComment(),
                 comment.getReplies()
         );

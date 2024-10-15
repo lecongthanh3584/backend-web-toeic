@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.Note;
+import com.backend.spring.entities.Note;
 import com.backend.spring.payload.response.NoteResponse;
 
 public class NoteMapper {

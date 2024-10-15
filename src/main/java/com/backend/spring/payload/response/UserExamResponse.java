@@ -1,11 +1,7 @@
 package com.backend.spring.payload.response;
 
-import com.backend.spring.entity.Exam;
-import com.backend.spring.entity.User;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Column;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import com.backend.spring.entities.Exam;
+import com.backend.spring.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

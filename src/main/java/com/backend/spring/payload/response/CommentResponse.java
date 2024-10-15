@@ -1,7 +1,7 @@
 package com.backend.spring.payload.response;
 
-import com.backend.spring.entity.Comment;
-import com.backend.spring.entity.User;
+import com.backend.spring.entities.Comment;
+import com.backend.spring.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,7 +17,8 @@ public class CommentResponse {
     private Integer commentId;
     private String text;
     private User user;
-    private LocalDateTime date;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private Comment parentcomment;
     private List<Comment> replies;
 

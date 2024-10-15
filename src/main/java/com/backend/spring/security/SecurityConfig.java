@@ -1,18 +1,24 @@
 package com.backend.spring.security;
 
 import com.backend.spring.enums.ERole;
+import com.backend.spring.security.OAuth2.CustomOAuth2Service;
+import com.backend.spring.security.OAuth2.OAuth2AuthenticationFailureHandler;
+import com.backend.spring.security.OAuth2.OAuth2AuthenticationSuccessHandler;
 import com.backend.spring.security.jwt.AuthEntryPointJwt;
 import com.backend.spring.security.jwt.JwtFilterUtil;
 
 import com.backend.spring.security.service.CustomUserDetailService;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -22,17 +28,21 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired
-    private CustomUserDetailService userDetailsService;
+    private final CustomUserDetailService userDetailsService;
 
-    @Autowired
-    private AuthEntryPointJwt unauthorizedHandler;
+    private final AuthEntryPointJwt unauthorizedHandler;
 
-    @Autowired
-    private JwtFilterUtil jwtFilterUtil;
+    private final JwtFilterUtil jwtFilterUtil;
+
+    private final CustomOAuth2Service customOAuth2Service;
+
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
@@ -66,11 +76,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
                                         "/v3/api-docs.yaml").permitAll()
-                                .requestMatchers("/api/public/**").permitAll()
-                                .requestMatchers("/api/auth/**").permitAll()
-                                .requestMatchers("/api/admin/**").hasRole(ERole.ADMIN.name())
-                                .requestMatchers("/api/user/**").hasRole(ERole.LEARNER.name())
-
+                                .requestMatchers("/oauth2/**").permitAll()
+                                .requestMatchers("/api/v1/public/**", "/api/v1/auth/**").permitAll()
+                                .requestMatchers("/api/v1/admin/**").hasRole(ERole.ADMIN.name())
+                                .requestMatchers("/api/v1/user/**").hasRole(ERole.LEARNER.name())
                                 .requestMatchers("/ws/**").permitAll()
 
 //                               Cho phép truy cập vào file tĩnh
@@ -82,6 +91,12 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .addFilterBefore(jwtFilterUtil, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfor -> userInfor
+                                .userService(customOAuth2Service))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
+                )
                 .build();
     }
 

@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.ExamQuestion;
+import com.backend.spring.entities.ExamQuestion;
 import com.backend.spring.payload.response.ExamQuestionResponse;
 
 public class ExamQuestionMapper {

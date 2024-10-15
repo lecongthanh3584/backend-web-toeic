@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.QuestionGroup;
+import com.backend.spring.entities.QuestionGroup;
 import com.backend.spring.payload.response.QuestionGroupResponse;
 
 public class QuestionGroupMapper {

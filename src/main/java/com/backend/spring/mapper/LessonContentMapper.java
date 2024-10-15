@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.LessonContent;
+import com.backend.spring.entities.LessonContent;
 import com.backend.spring.payload.response.LessonContentResponse;
 
 public class LessonContentMapper {

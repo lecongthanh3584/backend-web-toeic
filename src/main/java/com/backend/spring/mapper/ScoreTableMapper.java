@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.ScoreTable;
+import com.backend.spring.entities.ScoreTable;
 import com.backend.spring.payload.response.ScoreTableResponse;
 
 public class ScoreTableMapper {

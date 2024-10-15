@@ -3,11 +3,9 @@ package com.backend.spring.security.service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
-import com.backend.spring.entity.Role;
-import com.backend.spring.entity.User;
-import jakarta.persistence.criteria.CriteriaBuilder;
+import com.backend.spring.entities.Role;
+import com.backend.spring.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

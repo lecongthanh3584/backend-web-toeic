@@ -1,16 +1,11 @@
 package com.backend.spring.payload.response;
 
-import com.backend.spring.entity.Question;
-import com.backend.spring.entity.Section;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
+import com.backend.spring.entities.Section;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Data
 @NoArgsConstructor

@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.Feedback;
+import com.backend.spring.entities.Feedback;
 import com.backend.spring.payload.response.FeedBackResponse;
 
 public class FeedBackMapper {

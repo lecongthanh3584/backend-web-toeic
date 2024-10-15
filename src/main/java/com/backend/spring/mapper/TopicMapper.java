@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.Topic;
+import com.backend.spring.entities.Topic;
 import com.backend.spring.payload.response.TopicResponse;
 
 public class TopicMapper {

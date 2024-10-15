@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,13 +20,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<?> handleRunTimeException(RuntimeException e) {
         return new ResponseEntity<>(new ResponseData<>(EStatusCode.EXCEPTION_OCCURRED.getValue(), e.getMessage()),
-                HttpStatus.INTERNAL_SERVER_ERROR);
+                HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleException(Exception e) {
         return new ResponseEntity<>(new ResponseData<>(EStatusCode.EXCEPTION_OCCURRED.getValue(), e.getMessage()),
-                HttpStatus.INTERNAL_SERVER_ERROR);
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(RefreshTokenException.class)
+    public ResponseEntity<?> handleRefreshTokenException(RefreshTokenException e) {
+        return new ResponseEntity<>(new ResponseData<>(e.getCode(), e.getMessage()),
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(OAuth2AuthenticationProcessingException.class)
+    public ResponseEntity<?> handleOAuth2AuthenException(OAuth2AuthenticationProcessingException e) {
+        return new ResponseEntity<>(new ResponseData<>(e.getCode(), e.getMessage()),
+                HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -35,7 +48,7 @@ public class GlobalExceptionHandler {
                 errors.put(error.getField(), error.getDefaultMessage())
         );
 
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.EXCEPTION_OCCURRED.getValue(), MessageConstant.INVALID_DATA, errors),
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_INVALID.getValue(), MessageConstant.INVALID_DATA, errors),
                 HttpStatus.BAD_REQUEST);
     }
 
