@@ -7,14 +7,43 @@ public class MessageConstant {
     public static class Auth {
         public static final String SIGNIN_SUCCESS = "Signin successfully.";
         public static final String ACCOUNT_INACTIVATED = "Account not activated.";
+        public static final String ACCOUNT_ACTIVATED = "Account is activated.";
         public static final String ACCOUNT_LOCKED = "Account is locked.";
         public static final String SIGNIN_FAILED = "Wrong username or password.";
         public static final String ROLE_NOT_FOUND = "Role is not found.";
-        public static final String EMAIL_IS_EXISTED = "Email is existed.";
-        public static final String USERNAME_IS_EXISTED = "Username is existed.";
-        public static final String PHONENUMBER_IS_EXISTED = "Phonenumber is existed.";
-        public static final String REGISTER_SUCCESS = "Register successfully.";
+        public static final String USER_NOT_FOUND = "User is not found.";
+        public static final String EMAIL_NOT_FOUND = "Email is not found.";
+        public static final String EMAIL_IS_USED = "Email is used.";
+        public static final String USERNAME_IS_USED = "Username is used.";
+        public static final String ACTIVATE_ACCOUNT = "ACTIVATE ACCOUNT";
+        public static final String RESET_PASSWORD = "RESET PASSWORD";
+        public static final String SIGNUP_SUCCESS = "Register account successfully.";
+        public static final String SIGNUP_FAILED = "Register account failed.";
+        public static final String INVALID_REFRESH_TOKEN = "Invalid refresh token";
+        public static final String REFRESH_TOKEN_EXPIRED = "Refresh token expired";
+        public static final String ACTIVATE_MAIL_EXPIRED = "Email activate account expired";
+        public static final String GET_NEW_ACCESS_TOKEN_SUCCESS = "Get new access token successfully.";
+        public static final String SEND_NEW_VERIFICATION_MAIL_SUCCESS = "Send new verification email successfully.";
+        public static final String SEND_NEW_RESET_MAIL_SUCCESS = "Send new reset password email successfully.";
+        public static final String SEND_RESET_MAIL_SUCCESS = "Send reset password email successfully.";
+        public static final String ACTIVATE_ACCOUNT_SUCCESS = "Activate account successfully.";
+        public static final String ACTIVATE_ACCOUNT_FAILURE = "Activate account failure.";
+        public static final String EMAIL_NOT_EXISTED = "Email is not existed.";
+        public static final String TOKEN_AUTH_NOT_VALID = "Token auth is not valid.";
+        public static final String TOKEN_AUTH_EXPIRED = "Token auth is expired.";
+        public static final String DATA_INVALID = "Data is invalid.";
+        public static final String RESET_PASSWORD_SUCCESS = "Rest password successfully.";
         public static final String SIGNOUT_SUCCESS = "Signout successfully.";
+        public static final String SIGNOUT_FAILURE = "Signout failure.";
+
+    }
+
+    public static class Redis {
+        public static final String REFRESH_TOKEN = "RefreshToken";
+    }
+
+    public static class WebSocketComment {
+        public static final String ADD_NEW_COMMENT = "/comment/add-new";
     }
 
     public static class Exam {

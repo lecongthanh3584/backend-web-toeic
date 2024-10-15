@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.VocabularyQuestion;
+import com.backend.spring.entities.VocabularyQuestion;
 import com.backend.spring.payload.response.VocabularyQuestionResponse;
 
 public class VocabularyQuestionMapper {

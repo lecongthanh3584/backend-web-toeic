@@ -22,7 +22,7 @@ public class FreeMaterialResponse {
 
     private String description;
 
-    private String filePdf;
+    private String fileName;
 
     private Integer materialStatus;
 

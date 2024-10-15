@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.GrammarQuestion;
+import com.backend.spring.entities.GrammarQuestion;
 import com.backend.spring.payload.response.GrammarQuestionResponse;
 
 public class GrammarQuestionMapper {

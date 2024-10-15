@@ -7,9 +7,6 @@ import lombok.Data;
 public class UserExamRequest {
     private Integer userExamId;
 
-    @NotNull(message = "Id người dùng không được bỏ trống!")
-    private Integer userId;
-
     @NotNull(message = "Id của bài thi không được bỏ trống!")
     private Integer examId;
 

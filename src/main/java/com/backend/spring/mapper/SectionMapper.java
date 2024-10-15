@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.Section;
+import com.backend.spring.entities.Section;
 import com.backend.spring.payload.response.SectionResponse;
 
 public class SectionMapper {
@@ -10,7 +10,7 @@ public class SectionMapper {
         }
 
         return new SectionResponse(
-                section.getId(),
+                section.getSectionId(),
                 section.getName(),
                 section.getStatus(),
                 section.getImage(),

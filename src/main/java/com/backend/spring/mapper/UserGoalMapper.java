@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.UserGoal;
+import com.backend.spring.entities.UserGoal;
 import com.backend.spring.payload.response.UserGoalResponse;
 
 public class UserGoalMapper {

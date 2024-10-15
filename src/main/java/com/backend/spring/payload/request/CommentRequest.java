@@ -9,10 +9,10 @@ import lombok.Data;
 public class CommentRequest {
     private Integer commentId;
 
-    @NotNull
+    @NotNull(message = "id của user phải có giá trị.")
     private Integer userId;
 
-    @NotBlank(message = "Nội dung bình luận không được để trống!")
+    @NotBlank(message = "Nội dung bình luận không được để trống.")
     private String text;
 
     private Integer parentId;

@@ -1,7 +1,7 @@
 package com.backend.spring.payload.response;
 
-import com.backend.spring.entity.QuestionGroup;
-import com.backend.spring.entity.Section;
+import com.backend.spring.entities.QuestionGroup;
+import com.backend.spring.entities.Section;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

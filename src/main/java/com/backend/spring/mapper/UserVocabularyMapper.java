@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.UserVocabulary;
+import com.backend.spring.entities.UserVocabulary;
 import com.backend.spring.payload.response.UserVocabularyResponse;
 
 public class UserVocabularyMapper {

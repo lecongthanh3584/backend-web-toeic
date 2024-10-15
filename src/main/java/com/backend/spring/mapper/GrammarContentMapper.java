@@ -1,6 +1,6 @@
 package com.backend.spring.mapper;
 
-import com.backend.spring.entity.GrammarContent;
+import com.backend.spring.entities.GrammarContent;
 import com.backend.spring.payload.response.GrammarContentResponse;
 
 public class GrammarContentMapper {

@@ -1,6 +1,5 @@
 package com.backend.spring.payload.response;
 
-import com.backend.spring.entity.Exam;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

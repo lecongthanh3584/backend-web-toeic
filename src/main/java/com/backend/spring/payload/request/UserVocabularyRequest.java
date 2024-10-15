@@ -7,9 +7,6 @@ import lombok.Data;
 public class UserVocabularyRequest {
     private Long userExamId;
 
-    @NotNull(message = "Id của người dùng không được bỏ trống!")
-    private Integer userId;
-
     @NotNull(message = "Id của từ vựng không được bỏ trống!")
     private Integer vocabularyId;
 }

@@ -19,8 +19,6 @@ public class SigninResponse {
 
     private Long accessTokenExpirationTime; // Thêm thông tin thời gian hết hạn của Access Token
 
-    private Long refreshTokenExpirationTime; // Thêm thông tin thời gian hết hạn của Refresh Token
-
 //    private Integer id;
 //    private String username;
 //    private String email;

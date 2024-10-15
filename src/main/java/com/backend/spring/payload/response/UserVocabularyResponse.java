@@ -1,10 +1,6 @@
 package com.backend.spring.payload.response;
 
-import com.backend.spring.entity.User;
-import com.backend.spring.entity.Vocabulary;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import com.backend.spring.entities.Vocabulary;
 import lombok.*;
 
 @Data
