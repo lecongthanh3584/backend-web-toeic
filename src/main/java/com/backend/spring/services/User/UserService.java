@@ -19,6 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,8 +49,13 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<User> findByRoleName(String roleName) {
-        return userRepository.findByRoles(roleName);
+    public Page<User> getAllLearners(Integer pageNumber, String keyword, String... sortBys) {
+
+        List<Sort.Order> orders = getListSort(sortBys);
+
+        Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by(orders));
+
+        return userRepository.getAllLearners(ERole.LEARNER.name(), keyword, pageable);
     }
 
     @Override
@@ -163,6 +172,29 @@ public class UserService implements IUserService {
         userLogin.setUpdatedAt(LocalDateTime.now());
 
         return userRepository.save(userLogin);
+    }
+
+    private List<Sort.Order> getListSort(String... sortBys) {
+        List<Sort.Order> orders = new ArrayList<>();
+
+        for(String sortBy : sortBys) {
+            String[] sort = sortBy.split(":"); //Tách từng phần để xác định xem là sắp xếp tăng dần hay giảm dần
+
+            if (sort.length == 2) {
+                String field = sort[0].trim();
+                String direction = sort[1].trim();
+
+                if (direction.equalsIgnoreCase("asc")) {
+                    orders.add(new Sort.Order(Sort.Direction.ASC, field));
+                } else if (direction.equalsIgnoreCase("desc")) {
+                    orders.add(new Sort.Order(Sort.Direction.DESC, field));
+                }
+            } else {
+                throw new RuntimeException(MessageConstant.INVALID_PARAMETER);
+            }
+        }
+
+        return orders;
     }
 
 }

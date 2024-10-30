@@ -28,16 +28,7 @@ public class ScoreTableController {
 
     private final IScoreTableService iScoreTableService;
 
-    @GetMapping("/public/score-table/get-all")
-    public ResponseEntity<?> getAllScores() {
-        List<ScoreTableResponse> scoreList = iScoreTableService.getAllScores().stream().map(
-                ScoreTableMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.ScoreTable.GET_DATA_SUCCESS, scoreList),
-                HttpStatus.OK);
-    }
-
+    //admin
     @GetMapping("/admin/score-table/get-by-id/{id}")
     public ResponseEntity<?> getScoreById(@PathVariable("id") @Min(1) Integer id) {
         ScoreTableResponse scoreTable = ScoreTableMapper.mapFromEntityToResponse(iScoreTableService.getScoreById(id));
@@ -88,6 +79,17 @@ public class ScoreTableController {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.ScoreTable.DELETE_FAILED),
                     HttpStatus.BAD_REQUEST);
         }
+    }
+
+    //user
+    @GetMapping("/public/score-table/get-all")
+    public ResponseEntity<?> getAllScores() {
+        List<ScoreTableResponse> scoreList = iScoreTableService.getAllScores().stream().map(
+                ScoreTableMapper::mapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.ScoreTable.GET_DATA_SUCCESS, scoreList),
+                HttpStatus.OK);
     }
 
     @GetMapping("/public/score-table/get-listening-scores")

@@ -2,10 +2,13 @@ package com.backend.spring.controllers;
 
 import com.backend.spring.constants.MessageConstant;
 import com.backend.spring.enums.EStatusCode;
+import com.backend.spring.mapper.ExamMapper;
 import com.backend.spring.mapper.TopicMapper;
 import com.backend.spring.entities.Topic;
 import com.backend.spring.payload.request.TopicRequest;
+import com.backend.spring.payload.response.ExamResponse;
 import com.backend.spring.payload.response.TopicResponse;
+import com.backend.spring.payload.response.main.PaginationData;
 import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.services.Topic.ITopicService;
 import jakarta.validation.Valid;
@@ -14,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -36,27 +40,25 @@ public class TopicController {
 
 //  Admin
     @GetMapping("/admin/topic/get-all")
-    public ResponseEntity<?> getAllTopics() {
-        List<TopicResponse> topicList = iTopicService.getAllTopics().stream().map(
+    public ResponseEntity<?> getAllTopics(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "created_at:desc") String... sortBys
+    ) {
+        Page<Topic> topicPage = iTopicService.getAllTopics(page, keyword, sortBys);
+
+        PaginationData paginationData = PaginationData.builder().totalPage(topicPage.getTotalPages()).totalElement(topicPage.getTotalElements())
+                .pageNumber(topicPage.getPageable().getPageNumber()).pageSize(topicPage.getPageable().getPageSize()).build();
+
+        List<TopicResponse> topicResponses = topicPage.getContent().stream().map(
                 TopicMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
+        ).toList();
 
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Topic.GET_DATA_SUCCESS, topicList),
-                HttpStatus.OK);
-    }
-
-//  Người dùng
-    @GetMapping("/public/topic/get-all/enable")
-    public ResponseEntity<?> getAllEnableTopics() {
-        List<TopicResponse> topicList = iTopicService.getAllTopicEnable().stream().map(
-                TopicMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        if (!topicList.isEmpty()) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Topic.GET_DATA_SUCCESS, topicList),
-                    HttpStatus.OK);
+        if (!topicResponses.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Topic.GET_DATA_SUCCESS,
+                    paginationData, topicResponses), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Topic.DATA_NOT_FOUND, topicList),
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Topic.DATA_NOT_FOUND),
                     HttpStatus.NOT_FOUND);
         }
     }
@@ -190,6 +192,30 @@ public class TopicController {
         } catch (Exception e) {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), e.getMessage()),
                     HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+//  User
+    @GetMapping("/public/topic/get-all/enable")
+    public ResponseEntity<?> getAllEnableTopics(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "") String keyword
+    ) {
+        Page<Topic> topicPage = iTopicService.getAllTopicEnable(page, keyword);
+
+        PaginationData paginationData = PaginationData.builder().totalPage(topicPage.getTotalPages()).totalElement(topicPage.getTotalElements())
+                .pageNumber(topicPage.getPageable().getPageNumber()).pageSize(topicPage.getPageable().getPageSize()).build();
+
+        List<TopicResponse> topicResponses = topicPage.getContent().stream().map(
+                TopicMapper::mapFromEntityToResponse
+        ).toList();
+
+        if (!topicResponses.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Topic.GET_DATA_SUCCESS,
+                    paginationData, topicResponses), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Topic.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 

@@ -31,6 +31,7 @@ public class UserExamController {
 
     private final IUserExamService iUserExamService;
 
+    //user
     @GetMapping("/admin/user-exam/get-all")
     public ResponseEntity<?> getAllUserExams() {
         List<UserExamResponse> userExamList = iUserExamService.getAllUserExams().stream().map(
@@ -54,6 +55,36 @@ public class UserExamController {
         }
     }
 
+    //  Thống kê tổng số lượt thi của từng bài thi (ADMIN)
+    @GetMapping("/admin/user-exam/get-number-attempt-for-each-exam")
+    public ResponseEntity<?> getNumberAttemptForEachExam() {
+        try {
+            List<ExamAttemptResponse> totalExamCountsByExamName = iUserExamService.getNumberAttemptForEachExam();
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, totalExamCountsByExamName),
+                    HttpStatus.OK);
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    //  Tổng số lượt thi hằng ngày (ADMIN)
+    @GetMapping("/admin/user-exam/get-daily-exam-counts")
+    public ResponseEntity<?> getDailyExamCounts() {
+        try {
+            List<DailyExamCountResponse> dailyExamCounts = iUserExamService.getDailyExamCounts();
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, dailyExamCounts),
+                    HttpStatus.OK);
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    //user
     @PostMapping("/user/user-exam/create")
     public ResponseEntity<?> createUserExam(@RequestBody @Valid UserExamRequest userExamRequest) {
         UserExam createdUserExam = iUserExamService.createUserExam(userExamRequest);
@@ -142,34 +173,6 @@ public class UserExamController {
         // Trả về tổng thời gian luyện tập dưới dạng số giây
         return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, totalCompletionTime),
                 HttpStatus.OK);
-    }
-
-//  Thống kê tổng số lượt thi của từng bài thi (ADMIN)
-    @GetMapping("/admin/user-exam/get-number-attempt-for-each-exam")
-    public ResponseEntity<?> getNumberAttemptForEachExam() {
-        try {
-            List<ExamAttemptResponse> totalExamCountsByExamName = iUserExamService.getNumberAttemptForEachExam();
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, totalExamCountsByExamName),
-                    HttpStatus.OK);
-
-        } catch (Exception e) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_FAILED.getValue(), e.getMessage()),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-//  Tổng số lượt thi hằng ngày (ADMIN)
-    @GetMapping("/admin/user-exam/get-daily-exam-counts")
-    public ResponseEntity<?> getDailyExamCounts() {
-        try {
-            List<DailyExamCountResponse> dailyExamCounts = iUserExamService.getDailyExamCounts();
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserExam.GET_DATA_SUCCESS, dailyExamCounts),
-                    HttpStatus.OK);
-
-        } catch (Exception e) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_FAILED.getValue(), e.getMessage()),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 
     // Tính độ dài (length) của danh sách bài thi của người dùng theo userId

@@ -35,6 +35,7 @@ public class VocabularyController {
 
     private final IVocabularyService iVocabularyService;
 
+    //Admin
     @GetMapping("/admin/vocabulary/get-all")
     public ResponseEntity<?> getAllVocabularies() {
         List<VocabularyResponse> vocabularyList = iVocabularyService.getAllVocabularies().stream().map(
@@ -70,26 +71,6 @@ public class VocabularyController {
                     HttpStatus.OK);
         } else {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Vocabulary.DATA_NOT_FOUND, vocabularyList),
-                    HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @GetMapping("/public/vocabulary/get-by-topic/{topicId}/enable")
-    public ResponseEntity<?> getEnableVocabulariesByTopicId(@PathVariable @Min(1) Integer topicId) {
-        List<VocabularyResponse> vocabularyList = iVocabularyService.getVocabulariesByTopicId(topicId).stream().map(
-                VocabularyMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        // Lọc danh sách chỉ giữ lại các Vocabulary có vocabularyStatus là 1 (ENABLE)
-        List<VocabularyResponse> filteredVocabularies = vocabularyList.stream()
-                .filter(vocabulary -> vocabulary.getVocabularyStatus().equals(EStatus.ENABLE.getValue()))
-                .collect(Collectors.toList());
-
-        if (!filteredVocabularies.isEmpty()) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Vocabulary.GET_DATA_SUCCESS, filteredVocabularies),
-                    HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Vocabulary.DATA_NOT_FOUND, filteredVocabularies),
                     HttpStatus.NOT_FOUND);
         }
     }
@@ -203,6 +184,27 @@ public class VocabularyController {
         } catch (Exception e) {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPLOAD_FILE_FAILED.getValue(), e.getMessage()),
                     HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    //User
+    @GetMapping("/public/vocabulary/get-by-topic/{topicId}/enable")
+    public ResponseEntity<?> getEnableVocabulariesByTopicId(@PathVariable @Min(1) Integer topicId) {
+        List<VocabularyResponse> vocabularyList = iVocabularyService.getVocabulariesByTopicId(topicId).stream().map(
+                VocabularyMapper::mapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        // Lọc danh sách chỉ giữ lại các Vocabulary có vocabularyStatus là 1 (ENABLE)
+        List<VocabularyResponse> filteredVocabularies = vocabularyList.stream()
+                .filter(vocabulary -> vocabulary.getVocabularyStatus().equals(EStatus.ENABLE.getValue()))
+                .collect(Collectors.toList());
+
+        if (!filteredVocabularies.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Vocabulary.GET_DATA_SUCCESS, filteredVocabularies),
+                    HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Vocabulary.DATA_NOT_FOUND, filteredVocabularies),
+                    HttpStatus.NOT_FOUND);
         }
     }
 

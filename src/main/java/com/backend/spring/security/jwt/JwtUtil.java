@@ -27,7 +27,7 @@ public class JwtUtil {
 
   public String generateAccessToken(User user) {
     return Jwts.builder()
-            .setSubject(String.format("%s, %s", user.getUserId(), user.getUsername()))
+            .setSubject(String.format("%s, %s", user.getUserId(), user.getEmail()))
             .setIssuedAt(date)
             .setExpiration(expireTime)
             .signWith(getSignInKey(), SignatureAlgorithm.HS256)

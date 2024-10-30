@@ -7,15 +7,18 @@ import com.backend.spring.entities.User;
 import com.backend.spring.enums.*;
 import com.backend.spring.exception.AlreadyExistsException;
 import com.backend.spring.exception.NotFoundException;
-import com.backend.spring.payload.request.ActivateAccountRequest;
-import com.backend.spring.payload.request.EmailRequest;
-import com.backend.spring.payload.request.ResetPasswordRequest;
-import com.backend.spring.payload.request.SignupRequest;
+import com.backend.spring.exception.OAuth2AuthenticationProcessingException;
+import com.backend.spring.payload.request.*;
+import com.backend.spring.payload.response.SigninResponse;
 import com.backend.spring.repositories.AuthTokenRepository;
 import com.backend.spring.repositories.RoleRepository;
 import com.backend.spring.repositories.UserRepository;
+import com.backend.spring.security.jwt.JwtUtil;
 import com.backend.spring.services.Email.EmailService;
 import com.backend.spring.services.Redis.IRedisService;
+import com.backend.spring.services.RefreshToken.IRefreshTokenService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,11 +32,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -51,6 +52,12 @@ public class AuthService implements IAuthService {
     private final EmailService emailService;
 
     private final IRedisService iRedisService;
+
+    private final JwtUtil jwtUtil;
+
+    private final IRefreshTokenService iRefreshTokenService;
+
+    private final GoogleIdTokenVerifier verifier;
 
     @Value("${spring.domain.front-end}")
     private String domainFrontEnd;
@@ -250,5 +257,101 @@ public class AuthService implements IAuthService {
             e.printStackTrace();
             return "";
         }
+    }
+
+    @Override
+    public SigninResponse handleLoginOAuth2Google(String tokenOAuth2) throws GeneralSecurityException, IOException {
+        GoogleIdToken googleIdToken = verifier.verify(tokenOAuth2);
+        if(googleIdToken == null) {
+            return null;
+        }
+
+        GoogleIdToken.Payload payload = googleIdToken.getPayload();
+
+        Optional<User> userOptional = userRepository.findByEmail(payload.getEmail());
+
+        User userLogin = null; //Lấy thông tin người dùng đăng nhập
+
+        if(userOptional.isPresent()) {
+
+            if(!userOptional.get().getProvider().equals(EProvider.GOOGLE.getValue())) {
+                throw new OAuth2AuthenticationProcessingException(EStatusCode.OAUTH2_EMAIL_EXISTED.getValue(), MessageConstant.Auth.EMAIL_IS_USED);
+            }
+
+            userLogin = updateExistUser(userOptional.get(), payload);
+        } else {
+            Role roleLearner = roleRepository.findByRoleName(ERole.LEARNER).orElseThrow(() -> new RuntimeException(MessageConstant.Auth.ROLE_NOT_FOUND));
+
+            userLogin = registerNewUser(payload, roleLearner);
+        }
+
+        return generateAccessTokenAndRefreshToken(userLogin);
+    }
+
+    @Override
+    public SigninResponse handleLoginOAuth2Facebook(OAuth2FbRequest request) {
+
+        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+
+        User userLogin = null; //Lấy thông tin người dùng đăng nhập
+
+        if(userOptional.isPresent()) {
+
+            if(!userOptional.get().getProvider().equals(EProvider.FACEBOOK.getValue())) {
+                throw new OAuth2AuthenticationProcessingException(EStatusCode.OAUTH2_EMAIL_EXISTED.getValue(), MessageConstant.Auth.EMAIL_IS_USED);
+            }
+
+            userLogin = updateExistUser(userOptional.get(), request);
+        } else {
+            Role roleLearner = roleRepository.findByRoleName(ERole.LEARNER).orElseThrow(() -> new RuntimeException(MessageConstant.Auth.ROLE_NOT_FOUND));
+
+            userLogin = registerNewUser(request, roleLearner);
+        }
+
+        return generateAccessTokenAndRefreshToken(userLogin);
+    }
+
+    //Đăng ký tài khoản mới khi đăng nhập bằng google
+    private User registerNewUser(GoogleIdToken.Payload payload, Role role) {
+        User newUser = User.builder().fullName((String) payload.get("name")).image((String) payload.get("picture")).isActive(EStatus.ACTIVATE.getValue())
+                .email(payload.getEmail()).status(EStatus.ENABLE.getValue()).roles(Set.of(role)).provider(EProvider.GOOGLE.getValue())
+                .build();
+
+        return userRepository.save(newUser);
+    }
+
+    //Cập nhật tài khoản khi tài khoản đã tồn tại
+    private User updateExistUser(User existUser, GoogleIdToken.Payload payload) {
+        existUser.setFullName((String) payload.get("name"));
+        existUser.setImage((String) payload.get("picture"));
+
+        return userRepository.save(existUser);
+    }
+
+    //Đăng ký tài khoản mới khi đăng nhập bằng facebook
+    private User registerNewUser(OAuth2FbRequest request, Role role) {
+        User newUser = User.builder().fullName(request.getFullName()).image(request.getImage()).isActive(EStatus.ACTIVATE.getValue())
+                .email(request.getEmail()).status(EStatus.ENABLE.getValue()).roles(Set.of(role)).provider(EProvider.FACEBOOK.getValue())
+                .build();
+
+        return userRepository.save(newUser);
+    }
+
+    //Cập nhật tài khoản khi tài khoản đã tồn tại
+    private User updateExistUser(User existUser, OAuth2FbRequest request) {
+        existUser.setFullName(request.getFullName());
+        existUser.setImage(request.getImage());
+
+        return userRepository.save(existUser);
+    }
+
+    //Tạo mới access-token và refresh-token trả về
+    private SigninResponse generateAccessTokenAndRefreshToken(User userLogin) {
+        String accessToken = jwtUtil.generateAccessToken(userLogin);
+        String refreshToken = iRefreshTokenService.generateRefreshToken(userLogin.getUserId());
+        List<String> roles = userLogin.getRoles().stream().map(item -> item.getRoleName().name()).toList();
+
+        return SigninResponse.builder().accessToken(accessToken).refreshToken(refreshToken)
+                .accessTokenExpirationTime(jwtUtil.getAccessTokenDurationMs()).roles(roles).build();
     }
 }

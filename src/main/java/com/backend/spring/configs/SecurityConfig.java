@@ -1,4 +1,4 @@
-package com.backend.spring.security;
+package com.backend.spring.configs;
 
 import com.backend.spring.enums.ERole;
 import com.backend.spring.security.OAuth2.CustomOAuth2Service;
@@ -9,15 +9,17 @@ import com.backend.spring.security.jwt.JwtFilterUtil;
 
 import com.backend.spring.security.service.CustomUserDetailService;
 
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -25,6 +27,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
@@ -67,6 +73,16 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public GoogleIdTokenVerifier googleIdTokenVerifier(@Value("${spring.security.oauth2.client.registration.google.client-id}") String cliendId) {
+        NetHttpTransport transport = new NetHttpTransport();
+        JsonFactory jsonFactory = new JacksonFactory();
+        return new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
+                .setAudience(Collections.singletonList(cliendId))
+                .build();
+
+    }
+
     //Quy tắc phần quyền dựa trên URL của tài nguyên.
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -79,7 +95,7 @@ public class SecurityConfig {
                                 .requestMatchers("/oauth2/**").permitAll()
                                 .requestMatchers("/api/v1/public/**", "/api/v1/auth/**").permitAll()
                                 .requestMatchers("/api/v1/admin/**").hasRole(ERole.ADMIN.name())
-                                .requestMatchers("/api/v1/user/**").hasRole(ERole.LEARNER.name())
+                                .requestMatchers("/api/v1/user/**").hasAnyRole(ERole.LEARNER.name())
                                 .requestMatchers("/ws/**").permitAll()
 
 //                               Cho phép truy cập vào file tĩnh
@@ -91,12 +107,6 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .addFilterBefore(jwtFilterUtil, UsernamePasswordAuthenticationFilter.class)
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfor -> userInfor
-                                .userService(customOAuth2Service))
-                        .successHandler(oAuth2AuthenticationSuccessHandler)
-                        .failureHandler(oAuth2AuthenticationFailureHandler)
-                )
                 .build();
     }
 

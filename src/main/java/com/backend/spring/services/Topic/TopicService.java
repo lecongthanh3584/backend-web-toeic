@@ -1,4 +1,5 @@
 package com.backend.spring.services.Topic;
+import com.backend.spring.constants.MessageConstant;
 import com.backend.spring.enums.EStatus;
 import com.backend.spring.entities.Topic;
 import com.backend.spring.repositories.TopicRepository;
@@ -7,6 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -59,14 +64,22 @@ public class TopicService implements ITopicService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Topic> getAllTopics() {
-        return topicRepository.findAll();
+    public Page<Topic> getAllTopics(Integer pageNumber, String keyword, String... sortBys) {
+
+        List<Sort.Order> orders = getListSort(sortBys);
+
+        Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by(orders));
+
+        return topicRepository.getAllTopicWithoutStatus(keyword, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Topic> getAllTopicEnable() {
-        return topicRepository.findAllByTopicStatus(EStatus.ENABLE.getValue());
+    public Page<Topic> getAllTopicEnable(Integer pageNumber, String keyword) {
+
+        Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by(Sort.Direction.DESC, "created_at"));
+
+        return topicRepository.getAllTopicHaveStatus(EStatus.ACTIVATE.getValue(), keyword, pageable);
     }
 
     @Override
@@ -203,5 +216,28 @@ public class TopicService implements ITopicService {
     @Transactional(readOnly = true)
     public boolean isTopicNameExistsAndIdNot(String topicName, Integer id) {
         return topicRepository.existsByTopicNameAndTopicIdNot(topicName, id);
+    }
+
+    private List<Sort.Order> getListSort(String... sortBys) {
+        List<Sort.Order> orders = new ArrayList<>();
+
+        for(String sortBy : sortBys) {
+            String[] sort = sortBy.split(":"); //Tách từng phần để xác định xem là sắp xếp tăng dần hay giảm dần
+
+            if (sort.length == 2) {
+                String field = sort[0].trim();
+                String direction = sort[1].trim();
+
+                if (direction.equalsIgnoreCase("asc")) {
+                    orders.add(new Sort.Order(Sort.Direction.ASC, field));
+                } else if (direction.equalsIgnoreCase("desc")) {
+                    orders.add(new Sort.Order(Sort.Direction.DESC, field));
+                }
+            } else {
+                throw new RuntimeException(MessageConstant.INVALID_PARAMETER);
+            }
+        }
+
+        return orders;
     }
 }

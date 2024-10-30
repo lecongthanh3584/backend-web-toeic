@@ -32,6 +32,7 @@ public class TestController {
 
     private final ITestService iTestService;
 
+    //admin
     @GetMapping("/admin/test/get-all")
     public ResponseEntity<?> getAllTests() {
         List<TestResponse> testList = iTestService.getAllTests().stream().map(
@@ -121,44 +122,6 @@ public class TestController {
         }
     }
 
-    // Get tests by sectionId (Admin)
-    @GetMapping("/admin/test/get-by-section/{sectionId}")
-    public ResponseEntity<?> getTestsBySectionId(@PathVariable("sectionId") @Min(1) Integer sectionId) {
-        List<TestResponse> testList = iTestService.getTestsBySectionId(sectionId).stream().map(
-                TestMapper::MapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        if (!testList.isEmpty()) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Test.GET_DATA_SUCCESS, testList),
-                    HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Test.DATA_NOT_FOUND),
-                    HttpStatus.NOT_FOUND);
-        }
-    }
-
-    // Get tests by sectionId (User)
-    @GetMapping("/public/test/get-by-section/{sectionId}/enable")
-    public ResponseEntity<?> getEnableTestsBySectionId(@PathVariable("sectionId") @Min(1) Integer sectionId) {
-        List<TestResponse> testList = iTestService.getTestsBySectionId(sectionId).stream().map(
-                TestMapper::MapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        // Lọc danh sách chỉ giữ lại các Test có testStatus là 1
-        List<TestResponse> filteredTests = testList.stream()
-                .filter(test -> test.getTestStatus().equals(EStatus.ENABLE.getValue()))
-                .collect(Collectors.toList());
-
-        if (!filteredTests.isEmpty()) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Test.GET_DATA_SUCCESS, filteredTests),
-                    HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Test.DATA_NOT_FOUND),
-                    HttpStatus.NOT_FOUND);
-        }
-    }
-
-    /** Thêm câu hỏi vào test cụ thể **/
     @PutMapping("/admin/test/add-questions-to-test/{id}")
     public ResponseEntity<?> addQuestionsToTest(@PathVariable("id") @Min(1) Integer testId, @RequestBody List<Integer> questionIds) {
         Test updatedTest = iTestService.updateQuestionsToTest(testId, questionIds);
@@ -200,6 +163,45 @@ public class TestController {
         }
     }
 
+
+    // Get tests by sectionId (Admin)
+    @GetMapping("/admin/test/get-by-section/{sectionId}")
+    public ResponseEntity<?> getTestsBySectionId(@PathVariable("sectionId") @Min(1) Integer sectionId) {
+        List<TestResponse> testList = iTestService.getTestsBySectionId(sectionId).stream().map(
+                TestMapper::MapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        if (!testList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Test.GET_DATA_SUCCESS, testList),
+                    HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Test.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
+        }
+    }
+
+    // Get tests by sectionId (User)
+    @GetMapping("/public/test/get-by-section/{sectionId}/enable")
+    public ResponseEntity<?> getEnableTestsBySectionId(@PathVariable("sectionId") @Min(1) Integer sectionId) {
+        List<TestResponse> testList = iTestService.getTestsBySectionId(sectionId).stream().map(
+                TestMapper::MapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        // Lọc danh sách chỉ giữ lại các Test có testStatus là 1
+        List<TestResponse> filteredTests = testList.stream()
+                .filter(test -> test.getTestStatus().equals(EStatus.ENABLE.getValue()))
+                .collect(Collectors.toList());
+
+        if (!filteredTests.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Test.GET_DATA_SUCCESS, filteredTests),
+                    HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Test.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /** Thêm câu hỏi vào test cụ thể **/
     @GetMapping("/public/test/get-question-by-test/{testId}/enable")
     public ResponseEntity<?> getQuestionsEnableByTestId(@PathVariable("testId") @Min(1) Integer testId) {
         Set<QuestionResponse> questions = iTestService.getQuestionsByTestId(testId).stream().map(

@@ -3,7 +3,7 @@ package com.backend.spring.exception;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 
-public class OAuth2AuthenticationProcessingException extends OAuth2AuthenticationException {
+public class OAuth2AuthenticationProcessingException extends RuntimeException {
 
     private final int code;
 

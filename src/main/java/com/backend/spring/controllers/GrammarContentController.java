@@ -30,16 +30,7 @@ public class GrammarContentController {
 
     private final IGrammarContentService iGrammarContentService;
 
-    @GetMapping("/public/grammar-content/get-all")
-    public ResponseEntity<?> getAllGrammarContents() {
-        List<GrammarContentResponse> grammarContents = iGrammarContentService.getAllGrammarContents().stream().map(
-                GrammarContentMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.GrammarContent.GET_DATA_SUCCESS, grammarContents),
-                HttpStatus.OK);
-    }
-
+    //admin
     @GetMapping("/admin/grammar-content/get-by-id/{id}")
     public ResponseEntity<?> getGrammarContentById(@PathVariable("id") @Min(1) Integer id) {
         GrammarContentResponse grammarContent = GrammarContentMapper.mapFromEntityToResponse(iGrammarContentService.getGrammarContentById(id));
@@ -95,16 +86,16 @@ public class GrammarContentController {
 
     @PutMapping("/admin/grammar-content/update-status/{id}")
     public ResponseEntity<?> updateGrammarContentStatus(@PathVariable("id") @Min(1) Integer id, @RequestBody Integer newStatus) {
-       GrammarContent grammarContent = iGrammarContentService.updateGrammarContentStatus(id, newStatus);
+        GrammarContent grammarContent = iGrammarContentService.updateGrammarContentStatus(id, newStatus);
 
-       if(grammarContent != null) {
-           return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.GrammarContent.UPDATE_STATUS_SUCCESS),
-                   HttpStatus.OK);
+        if(grammarContent != null) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.GrammarContent.UPDATE_STATUS_SUCCESS),
+                    HttpStatus.OK);
 
-       } else {
-           return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.GrammarContent.UPDATE_STATUS_FAILED),
-                   HttpStatus.BAD_REQUEST);
-       }
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.GrammarContent.UPDATE_STATUS_FAILED),
+                    HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PostMapping("/admin/grammar-content/upload")
@@ -141,7 +132,17 @@ public class GrammarContentController {
         }
     }
 
-//  Người dùng
+//  public
+    @GetMapping("/public/grammar-content/get-all")
+    public ResponseEntity<?> getAllGrammarContents() {
+        List<GrammarContentResponse> grammarContents = iGrammarContentService.getAllGrammarContents().stream().map(
+                GrammarContentMapper::mapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.GrammarContent.GET_DATA_SUCCESS, grammarContents),
+                HttpStatus.OK);
+    }
+
     @GetMapping("/public/grammar-content/get-content-by-grammar/{grammarId}/enable")
     public ResponseEntity<?> getEnableGrammarContentsByGrammarId(@PathVariable("grammarId") @Min(1) Integer grammarId) {
         List<GrammarContentResponse> grammarContents = iGrammarContentService.getGrammarContentsByGrammarId(grammarId).stream().map(

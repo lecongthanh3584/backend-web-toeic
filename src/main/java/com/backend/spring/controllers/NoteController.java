@@ -28,6 +28,32 @@ public class NoteController {
 
     private final INoteService iNoteService;
 
+    //admin
+    @GetMapping("/admin/note/get-by-id/{id}")
+    public ResponseEntity<?> getNoteById(@PathVariable("id") @Min(1) Integer noteId) {
+        NoteResponse note = NoteMapper.mapFromEntityToResponse(iNoteService.getNoteById(noteId));
+
+        if (note != null) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Note.GET_DATA_SUCCESS, note),
+                    HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Note.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/admin/note/get-all")
+    public ResponseEntity<?> getAllNotes() {
+        List<NoteResponse> noteList = iNoteService.getAllNotes().stream().map(
+                NoteMapper::mapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Note.GET_DATA_SUCCESS, noteList),
+                HttpStatus.OK);
+    }
+
+
+    //user
     @PostMapping("/user/note/create")
     public ResponseEntity<?> createNote(@RequestBody @Valid NoteRequest noteRequest) {
         Note createdNote = iNoteService.createNote(noteRequest);
@@ -66,29 +92,6 @@ public class NoteController {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.Note.DELETE_FAILED),
                     HttpStatus.BAD_REQUEST);
         }
-    }
-
-    @GetMapping("/admin/note/get-by-id/{id}")
-    public ResponseEntity<?> getNoteById(@PathVariable("id") @Min(1) Integer noteId) {
-        NoteResponse note = NoteMapper.mapFromEntityToResponse(iNoteService.getNoteById(noteId));
-
-        if (note != null) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Note.GET_DATA_SUCCESS, note),
-                    HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Note.DATA_NOT_FOUND),
-                    HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @GetMapping("/admin/note/get-all")
-    public ResponseEntity<?> getAllNotes() {
-        List<NoteResponse> noteList = iNoteService.getAllNotes().stream().map(
-                NoteMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Note.GET_DATA_SUCCESS, noteList),
-                HttpStatus.OK);
     }
 
     @GetMapping("/user/note/get-note-by-user")

@@ -1,7 +1,5 @@
 package com.backend.spring.entities;
 
-import java.time.LocalDateTime;
-
 import jakarta.persistence.*;
 
 import lombok.AllArgsConstructor;

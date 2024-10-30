@@ -27,7 +27,7 @@ public class UserExamQuestionController {
 
     private final IUserExamQuestionService iUserExamQuestionService;
 
-    // Lấy tất cả kết quả
+    // Lấy tất cả kết quả (Admin)
     @GetMapping("/admin/user-exam-questions/get-all")
     public ResponseEntity<?> getAll() {
         List<UserExamQuestionResponse> results = iUserExamQuestionService.getAll().stream().map(
@@ -38,7 +38,7 @@ public class UserExamQuestionController {
                 HttpStatus.OK);
     }
 
-    // Nộp bài
+    // Nộp bài (user)
     @PostMapping("/user/user-exam-questions/submit-all")
     public ResponseEntity<?> submitAllUserExamQuestions(@RequestBody List<UserExamQuestionRequest> userExamQuestionRequestList) {
         iUserExamQuestionService.submitAllUserExamQuestions(userExamQuestionRequestList);

@@ -29,6 +29,7 @@ public class LessonController {
 
     private final ILessonService iLessonService;
 
+    //admin
     @GetMapping("/admin/lesson/get-all")
     public ResponseEntity<?> getAllLessons() {
         List<LessonResponse> lessonList = iLessonService.getAllLessons().stream().map(
@@ -133,7 +134,8 @@ public class LessonController {
         }
     }
 
-    // Lấy danh sách bài học theo section_id (Người dùng)
+    //user
+    // Lấy danh sách bài học theo section_id (user)
     @GetMapping("/public/lesson/get-lesson-by-section/{sectionId}/enable")
     public ResponseEntity<?> getEnableLessonsBySectionId(@PathVariable("sectionId") @Min(1) Integer sectionId) {
         List<LessonResponse> lessonList = iLessonService.getLessonsBySectionId(sectionId).stream().map(

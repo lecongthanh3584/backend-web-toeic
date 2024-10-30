@@ -30,16 +30,7 @@ public class FeedbackController {
 
     private final IFeedbackService iFeedbackService;
 
-    @GetMapping("/public/feedback/get-all")
-    public ResponseEntity<?> getAllFeedback() {
-        List<FeedBackResponse> feedbackList = iFeedbackService.getAllFeedback().stream().map(
-                FeedBackMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Feedback.GET_DATA_SUCCESS ,feedbackList),
-                HttpStatus.OK);
-    }
-
+    //admin
     @GetMapping("/admin/feedback/get-by-id/{id}")
     public ResponseEntity<?> getFeedbackById(@PathVariable("id") @Min(1) Integer id) {
         FeedBackResponse feedback = FeedBackMapper.mapFromEntityToResponse(iFeedbackService.getFeedbackById(id));
@@ -50,20 +41,6 @@ public class FeedbackController {
         } else {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Feedback.DATA_NOT_FOUND),
                     HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @PostMapping("/public/feedback/create")
-    public ResponseEntity<?> createFeedback(@RequestBody @Valid FeedbackRequest feedbackRequest) {
-
-        Feedback createdFeedback = iFeedbackService.createFeedback(feedbackRequest);
-
-        if(createdFeedback != null) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.Feedback.CREATE_SUCCESS),
-                    HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.Feedback.CREATE_FAILED),
-                    HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -114,6 +91,30 @@ public class FeedbackController {
 
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Feedback.DATA_NOT_FOUND),
                     HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    //public
+    @GetMapping("/public/feedback/get-all")
+    public ResponseEntity<?> getAllFeedback() {
+        List<FeedBackResponse> feedbackList = iFeedbackService.getAllFeedback().stream().map(
+                FeedBackMapper::mapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Feedback.GET_DATA_SUCCESS ,feedbackList),
+                HttpStatus.OK);
+    }
+    @PostMapping("/public/feedback/create")
+    public ResponseEntity<?> createFeedback(@RequestBody @Valid FeedbackRequest feedbackRequest) {
+
+        Feedback createdFeedback = iFeedbackService.createFeedback(feedbackRequest);
+
+        if(createdFeedback != null) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_SUCCESS.getValue(), MessageConstant.Feedback.CREATE_SUCCESS),
+                    HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.CREATE_FAILED.getValue(), MessageConstant.Feedback.CREATE_FAILED),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 

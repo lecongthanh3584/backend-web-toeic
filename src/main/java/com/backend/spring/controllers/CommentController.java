@@ -42,6 +42,7 @@ public class CommentController {
                 HttpStatus.OK);
     }
 
+    //user
     @GetMapping("/user/comment/get-root-comment-by-user/{userId}")
     public ResponseEntity<?> getRootCommentsByUserId(@PathVariable Integer userId) {
         List<CommentResponse> rootCommentResponse = iCommentService.getRootCommentsByUserId(userId).stream().map(

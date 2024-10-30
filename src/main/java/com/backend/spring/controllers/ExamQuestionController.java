@@ -36,6 +36,7 @@ public class ExamQuestionController {
 
     private final IExamQuestionService iExamQuestionService;
 
+    //admin
     @GetMapping("/admin/exam-question/get-all")
     public ResponseEntity<?> getAllExamQuestions() {
         List<ExamQuestionResponse> examQuestionList = iExamQuestionService.getAllExamQuestions().stream().map(
@@ -105,21 +106,6 @@ public class ExamQuestionController {
         } else {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.ExamQuestion.DELETE_FAILED),
                     HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    @GetMapping("/user/exam-question/get-question-by-exam/{examId}")
-    public ResponseEntity<?> getQuestionsByExamIdRoleUser(@PathVariable("examId") @Min(1) Integer examId) {
-        List<ExamQuestionResponse> examQuestionList = iExamQuestionService.getExamQuestionsByExamId(examId).stream().map(
-                ExamQuestionMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        if (!examQuestionList.isEmpty()) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.ExamQuestion.GET_DATA_SUCCESS, examQuestionList),
-                    HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.ExamQuestion.DATA_NOT_FOUND),
-                    HttpStatus.NOT_FOUND);
         }
     }
 
@@ -235,6 +221,22 @@ public class ExamQuestionController {
         } catch (Exception e) {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPLOAD_FILE_FAILED.getValue(), e.getMessage()),
                     HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    //user
+    @GetMapping("/user/exam-question/get-question-by-exam/{examId}")
+    public ResponseEntity<?> getQuestionsByExamIdRoleUser(@PathVariable("examId") @Min(1) Integer examId) {
+        List<ExamQuestionResponse> examQuestionList = iExamQuestionService.getExamQuestionsByExamId(examId).stream().map(
+                ExamQuestionMapper::mapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        if (!examQuestionList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.ExamQuestion.GET_DATA_SUCCESS, examQuestionList),
+                    HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.ExamQuestion.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
