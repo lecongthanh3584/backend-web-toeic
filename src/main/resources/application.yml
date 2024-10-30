@@ -74,11 +74,12 @@ spring:
   # Cau hinh elastic-search
   elasticsearch:
     uris: http://localhost:9200
-    username:
+
+
 # Cau hinh JWT
 security:
   jwt:
-    secret-key: ezDniu6kzUCCwd0RCZLcmm9sF9erh2AXvISijgrdCPk
+    secret-key: ${JWT_SECRET_KEY:ezDniu6kzUCCwd0RCZLcmm9sF9erh2AXvISijgrdCPk}
     at-expiration-ms: 86400000
     rt-expiration-ms: 2592000000
 

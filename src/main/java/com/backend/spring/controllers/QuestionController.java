@@ -31,6 +31,7 @@ public class QuestionController {
 
     private final IQuestionService iQuestionService;
 
+    //admin
     @GetMapping("/admin/question/get-all")
     public ResponseEntity<?> getAllQuestions() {
         List<QuestionResponse> questionList = iQuestionService.getAllQuestions().stream().map(
@@ -69,25 +70,6 @@ public class QuestionController {
         }
     }
 
-    @GetMapping("/public/question/get-question-by-section/{sectionId}/enable")
-    public ResponseEntity<?> getQuestionsBySectionIdEnable(@PathVariable("sectionId") @Min(1) Integer sectionId) {
-        List<QuestionResponse> questionList = iQuestionService.getQuestionsBySectionId(sectionId).stream().map(
-                QuestionMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        List<QuestionResponse> questionResponseEnableList = questionList.stream().filter(
-                item -> item.getQuestionStatus().equals(EStatus.ENABLE.getValue())
-        ).collect(Collectors.toList());
-
-        if (!questionResponseEnableList.isEmpty()) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Question.GET_DATA_SUCCESS, questionResponseEnableList),
-                    HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Question.DATA_NOT_FOUND),
-                    HttpStatus.NOT_FOUND);
-        }
-    }
-
     @GetMapping("/admin/question/get-question-by-group/{groupId}")
     public ResponseEntity<?> getQuestionsByGroupId(@PathVariable("groupId") @Min(1) Integer groupId) {
         List<QuestionResponse> questionList = iQuestionService.getQuestionsByGroupId(groupId).stream().map(
@@ -96,25 +78,6 @@ public class QuestionController {
 
         if (!questionList.isEmpty()) {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Question.GET_DATA_SUCCESS, questionList),
-                    HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Question.DATA_NOT_FOUND),
-                    HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @GetMapping("/public/question/get-question-by-group/{groupId}/enable")
-    public ResponseEntity<?> getQuestionsEnableByGroupId(@PathVariable("groupId") @Min(1) Integer groupId) {
-        List<QuestionResponse> questionList = iQuestionService.getQuestionsByGroupId(groupId).stream().map(
-                QuestionMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        List<QuestionResponse> questionResponseEnableList = questionList.stream().filter(
-                item -> item.getQuestionStatus().equals(EStatus.ENABLE.getValue())
-        ).collect(Collectors.toList());
-
-        if (!questionResponseEnableList.isEmpty()) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Question.GET_DATA_SUCCESS, questionResponseEnableList),
                     HttpStatus.OK);
         } else {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Question.DATA_NOT_FOUND),
@@ -191,7 +154,46 @@ public class QuestionController {
         }
     }
 
-//  Học cải thiện
+    //user
+    @GetMapping("/public/question/get-question-by-section/{sectionId}/enable")
+    public ResponseEntity<?> getQuestionsBySectionIdEnable(@PathVariable("sectionId") @Min(1) Integer sectionId) {
+        List<QuestionResponse> questionList = iQuestionService.getQuestionsBySectionId(sectionId).stream().map(
+                QuestionMapper::mapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        List<QuestionResponse> questionResponseEnableList = questionList.stream().filter(
+                item -> item.getQuestionStatus().equals(EStatus.ENABLE.getValue())
+        ).collect(Collectors.toList());
+
+        if (!questionResponseEnableList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Question.GET_DATA_SUCCESS, questionResponseEnableList),
+                    HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Question.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/public/question/get-question-by-group/{groupId}/enable")
+    public ResponseEntity<?> getQuestionsEnableByGroupId(@PathVariable("groupId") @Min(1) Integer groupId) {
+        List<QuestionResponse> questionList = iQuestionService.getQuestionsByGroupId(groupId).stream().map(
+                QuestionMapper::mapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        List<QuestionResponse> questionResponseEnableList = questionList.stream().filter(
+                item -> item.getQuestionStatus().equals(EStatus.ENABLE.getValue())
+        ).collect(Collectors.toList());
+
+        if (!questionResponseEnableList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Question.GET_DATA_SUCCESS, questionResponseEnableList),
+                    HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Question.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
+        }
+    }
+
+//  Học cải thiện (user)
     @PostMapping("/public/question/get-by-section-and-type")
     public ResponseEntity<?> getQuestionsBySectionIdAndType(@RequestBody Map<String, Object> request) {
         Integer sectionId = (Integer) request.get("sectionId");

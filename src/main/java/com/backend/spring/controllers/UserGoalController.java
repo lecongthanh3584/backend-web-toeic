@@ -28,6 +28,18 @@ public class UserGoalController {
 
     private final IUserGoalService iUserGoalService;
 
+    //admin
+    @GetMapping("/admin/user-goal/get-all")
+    public ResponseEntity<?> getAllUserGoals() {
+        List<UserGoalResponse> userGoalList = iUserGoalService.getAllUserGoals().stream().map(
+                UserGoalMapper::mapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserGoal.GET_DATA_SUCCESS, userGoalList),
+                HttpStatus.OK);
+    }
+
+    //User
     @PostMapping("/user/user-goal/create")
     public ResponseEntity<?> createUserGoal(@RequestBody @Valid UserGoalRequest userGoalRequest) {
         UserGoal createdUserGoal = iUserGoalService.createUserGoal(userGoalRequest);
@@ -52,16 +64,6 @@ public class UserGoalController {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.UserGoal.DATA_NOT_FOUND),
                     HttpStatus.NOT_FOUND);
         }
-    }
-
-    @GetMapping("/admin/user-goal/get-all")
-    public ResponseEntity<?> getAllUserGoals() {
-        List<UserGoalResponse> userGoalList = iUserGoalService.getAllUserGoals().stream().map(
-                UserGoalMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.UserGoal.GET_DATA_SUCCESS, userGoalList),
-                HttpStatus.OK);
     }
 
     @GetMapping("/user/user-goal/get-by-user/{userId}")

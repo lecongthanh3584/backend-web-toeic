@@ -7,8 +7,8 @@ import lombok.*;
 
 @Data
 public class LoginRequest {
-    @NotBlank(message = "Username không được để trống!")
-    private String username;
+    @NotBlank(message = "email không được để trống!")
+    private String email;
 
     @NotBlank(message = "Mật khẩu không được để trống!")
     @Size(min = 6, max = 40, message = "Mật khẩu tối thiểu 6 ký tự và tối đa 40 ký tự!")

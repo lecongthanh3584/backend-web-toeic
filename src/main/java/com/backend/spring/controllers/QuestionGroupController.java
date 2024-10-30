@@ -28,6 +28,7 @@ public class QuestionGroupController {
 
     private final IQuestionGroupService iQuestionGroupService;
 
+    //admin
     @GetMapping("/admin/question-group/get-all")
     public ResponseEntity<?> getAllQuestionGroups() {
         List<QuestionGroupResponse> questionGroupList = iQuestionGroupService.getAllQuestionGroups().stream().map(

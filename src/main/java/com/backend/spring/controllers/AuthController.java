@@ -1,6 +1,7 @@
 package com.backend.spring.controllers;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -10,7 +11,6 @@ import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.entities.*;
 import com.backend.spring.exception.AlreadyExistsException;
 import com.backend.spring.exception.NotFoundException;
-import com.backend.spring.exception.RefreshTokenException;
 import com.backend.spring.payload.request.*;
 import com.backend.spring.payload.response.RefreshTokenResponse;
 import com.backend.spring.payload.response.main.ResponseData;
@@ -21,7 +21,6 @@ import com.backend.spring.utils.UserUtil;
 import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,9 +29,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -64,7 +60,7 @@ public class AuthController {
     public ResponseEntity<?> authenticateUser(@RequestBody @Valid LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             User userLogin = userDetails.getUser();
@@ -232,8 +228,17 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/get-user-oauth2")
-    public ResponseEntity<?> getUserOauth2(@AuthenticationPrincipal OAuth2User principal) {
-        return new ResponseEntity<>(principal, HttpStatus.OK);
+    @PostMapping("/oauth2/login-google")
+    public ResponseEntity<?> handleOauth2LoginGoogle(@RequestBody @Valid OAuth2GoogleRequest request) throws GeneralSecurityException, IOException {
+        SigninResponse response = iAuthService.handleLoginOAuth2Google(request.getAccessTokenOAuth2());
+
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.SIGNIN_SUCCESS.getValue(), MessageConstant.Auth.SIGNIN_SUCCESS, response), HttpStatus.OK);
+    }
+
+    @PostMapping("/oauth2/login-facebook")
+    public ResponseEntity<?> handleOauth2LoginFacebook(@RequestBody @Valid OAuth2FbRequest request) {
+        SigninResponse response = iAuthService.handleLoginOAuth2Facebook(request);
+
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.SIGNIN_SUCCESS.getValue(), MessageConstant.Auth.SIGNIN_SUCCESS, response), HttpStatus.OK);
     }
 }

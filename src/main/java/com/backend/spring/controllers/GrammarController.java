@@ -3,16 +3,20 @@ package com.backend.spring.controllers;
 import com.backend.spring.constants.MessageConstant;
 import com.backend.spring.enums.EStatus;
 import com.backend.spring.enums.EStatusCode;
+import com.backend.spring.mapper.ExamMapper;
 import com.backend.spring.mapper.GrammarMapper;
 import com.backend.spring.entities.Grammar;
 import com.backend.spring.payload.request.GrammarRequest;
+import com.backend.spring.payload.response.ExamResponse;
 import com.backend.spring.payload.response.GrammarResponse;
+import com.backend.spring.payload.response.main.PaginationData;
 import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.services.Grammar.IGrammarService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -31,30 +35,23 @@ public class GrammarController {
 
 //  Admin
     @GetMapping("/admin/grammar/get-all")
-    public ResponseEntity<?> getAllGrammar() {
-        List<GrammarResponse> grammarList = iGrammarService.getAllGrammar().stream().map(
+    public ResponseEntity<?> getAllGrammar(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "created_at:desc") String... sortBys
+    ) {
+        Page<Grammar> grammarPage = iGrammarService.getAllGrammar(page, keyword, sortBys);
+
+        PaginationData paginationData = PaginationData.builder().totalPage(grammarPage.getTotalPages()).totalElement(grammarPage.getTotalElements())
+                .pageNumber(grammarPage.getPageable().getPageNumber()).pageSize(grammarPage.getPageable().getPageSize()).build();
+
+        List<GrammarResponse> grammarResponseList = grammarPage.getContent().stream().map(
                 GrammarMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
+        ).toList();
 
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Grammar.GET_DATA_SUCCESS, grammarList),
-                HttpStatus.OK);
-    }
-
-//  Người dùng
-    @GetMapping("/public/grammar/get-all/enable")
-    public ResponseEntity<?> getAllEnableGrammar() {
-        List<GrammarResponse> grammarList = iGrammarService.getAllGrammar().stream().map(
-                GrammarMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        // Lọc danh sách chỉ giữ lại các Grammar có grammarStatus là 1
-        List<GrammarResponse> filteredGrammarList = grammarList.stream()
-                .filter(grammar -> grammar.getGrammarStatus().equals(EStatus.ENABLE.getValue()))
-                .collect(Collectors.toList());
-
-        if (!filteredGrammarList.isEmpty()) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Grammar.GET_DATA_SUCCESS, filteredGrammarList),
-                    HttpStatus.OK);
+        if (!grammarResponseList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Grammar.GET_DATA_SUCCESS,
+                    paginationData, grammarResponseList), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Grammar.DATA_NOT_FOUND),
                     HttpStatus.NOT_FOUND);
@@ -141,15 +138,39 @@ public class GrammarController {
 
     @PutMapping("/admin/grammar/update-status/{id}")
     public ResponseEntity<?> updateGrammarStatus(@PathVariable("id") @Min(1) Integer grammarId, @RequestBody Integer newStatus) {
-       Grammar grammar = iGrammarService.updateGrammarStatus(grammarId, newStatus);
+        Grammar grammar = iGrammarService.updateGrammarStatus(grammarId, newStatus);
 
-       if(grammar != null) {
-           return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Grammar.UPDATE_STATUS_SUCCESS),
-                   HttpStatus.OK);
-       } else {
-           return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Grammar.UPDATE_STATUS_FAILED),
-                   HttpStatus.BAD_REQUEST);
-       }
+        if(grammar != null) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.Grammar.UPDATE_STATUS_SUCCESS),
+                    HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.Grammar.UPDATE_STATUS_FAILED),
+                    HttpStatus.BAD_REQUEST);
+        }
+    }
+
+//  Người dùng
+    @GetMapping("/public/grammar/get-all/enable")
+    public ResponseEntity<?> getAllEnableGrammar(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "") String keyword
+    ) {
+        Page<Grammar> grammarPage = iGrammarService.getAllGrammarEnable(page, keyword);
+
+        PaginationData paginationData = PaginationData.builder().totalPage(grammarPage.getTotalPages()).totalElement(grammarPage.getTotalElements())
+                .pageNumber(grammarPage.getPageable().getPageNumber()).pageSize(grammarPage.getPageable().getPageSize()).build();
+
+        List<GrammarResponse> grammarResponseList = grammarPage.getContent().stream().map(
+                GrammarMapper::mapFromEntityToResponse
+        ).toList();
+
+        if (!grammarResponseList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Grammar.GET_DATA_SUCCESS,
+                    paginationData, grammarResponseList), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Grammar.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
+        }
     }
 
 }

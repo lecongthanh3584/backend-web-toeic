@@ -10,7 +10,7 @@ public class AppConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowCredentials(true)
-                .allowedOrigins("http://localhost:3001", "http://localhost:3002", "http://localhost:5500")
+                .allowedOrigins("http://localhost:3000", "http://localhost:3002", "http://localhost:5500")
                 .allowedMethods("*")
                 .allowedHeaders("*");
     }

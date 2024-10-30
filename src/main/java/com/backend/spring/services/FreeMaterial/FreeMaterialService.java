@@ -1,10 +1,15 @@
 package com.backend.spring.services.FreeMaterial;
 
+import com.backend.spring.constants.MessageConstant;
 import com.backend.spring.enums.EStatus;
 import com.backend.spring.entities.FreeMaterial;
 import com.backend.spring.repositories.FreeMaterialRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.backend.spring.payload.request.FreeMaterialRequest;
@@ -16,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,8 +34,19 @@ public class FreeMaterialService implements IFreeMaterialService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FreeMaterial> getAllFreeMaterials() {
-        return freeMaterialRepository.findAll();
+     public Page<FreeMaterial> getAllFreeMaterials(Integer pageNumber, String keyword, String... sortBys) {
+
+        List<Sort.Order> orders = getListSort(sortBys);
+
+        Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by(orders));
+        return freeMaterialRepository.findFreeMaterialWithoutStatus(keyword, pageable);
+    }
+
+    @Override
+    public Page<FreeMaterial> getAllFreeMaterialsEnable(Integer pageNumber, String keyword) {
+        Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by(Sort.Direction.DESC, "created_at"));
+
+        return freeMaterialRepository.findFreeMaterialHaveStatus(EStatus.ACTIVATE.getValue(), keyword, pageable);
     }
 
     @Override
@@ -156,6 +173,29 @@ public class FreeMaterialService implements IFreeMaterialService {
     @Transactional(readOnly = true)
     public long countTotalFreeMaterials() {
         return freeMaterialRepository.count();
+    }
+
+    private List<Sort.Order> getListSort(String... sortBys) {
+        List<Sort.Order> orders = new ArrayList<>();
+
+        for(String sortBy : sortBys) {
+            String[] sort = sortBy.split(":"); //Tách từng phần để xác định xem là sắp xếp tăng dần hay giảm dần
+
+            if (sort.length == 2) {
+                String field = sort[0].trim();
+                String direction = sort[1].trim();
+
+                if (direction.equalsIgnoreCase("asc")) {
+                    orders.add(new Sort.Order(Sort.Direction.ASC, field));
+                } else if (direction.equalsIgnoreCase("desc")) {
+                    orders.add(new Sort.Order(Sort.Direction.DESC, field));
+                }
+            } else {
+                throw new RuntimeException(MessageConstant.INVALID_PARAMETER);
+            }
+        }
+
+        return orders;
     }
 
 }

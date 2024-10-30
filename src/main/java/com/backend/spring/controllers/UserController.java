@@ -4,18 +4,23 @@ import com.backend.spring.constants.MessageConstant;
 import com.backend.spring.enums.ERole;
 import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.exception.NotFoundException;
+import com.backend.spring.mapper.ExamMapper;
 import com.backend.spring.mapper.UserMapper;
 import com.backend.spring.entities.User;
 import com.backend.spring.payload.request.ChangePasswordRequest;
 import com.backend.spring.payload.request.ProfileImageRequest;
 import com.backend.spring.payload.request.ProfileRequest;
+import com.backend.spring.payload.response.ExamResponse;
 import com.backend.spring.payload.response.UserResponse;
+import com.backend.spring.payload.response.main.PaginationData;
 import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.services.User.IUserService;
+import com.backend.spring.utils.UserUtil;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -33,15 +38,29 @@ public class UserController {
 
     private final IUserService iUserService;
 
+    //admin
     @GetMapping("/admin/user/get-all-learners")
-    public ResponseEntity<?> getAllLearns() {
-        List<User> allLearns = iUserService.findByRoleName(ERole.LEARNER.name());
-        List<UserResponse> userResponseList = allLearns.stream().map(
-                UserMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
+    public ResponseEntity<?> getAllLearns(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "created_at:desc") String... sortBys
+    ) {
+        Page<User> userPage = iUserService.getAllLearners(page, keyword, sortBys);
 
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.User.GET_DATA_SUCCESS, userResponseList),
-                HttpStatus.OK);
+        PaginationData paginationData = PaginationData.builder().totalPage(userPage.getTotalPages()).totalElement(userPage.getTotalElements())
+                .pageNumber(userPage.getPageable().getPageNumber()).pageSize(userPage.getPageable().getPageSize()).build();
+
+        List<UserResponse> userResponseList = userPage.getContent().stream().map(
+                UserMapper::mapFromEntityToResponse
+        ).toList();
+
+        if (!userResponseList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.User.GET_DATA_SUCCESS,
+                    paginationData, userResponseList), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.User.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("/admin/user/count-learners")
@@ -120,6 +139,20 @@ public class UserController {
 
     }
 
+    @PutMapping("/admin/user/change-password")
+    public ResponseEntity<?> changePasswordAdmin(@RequestBody @Valid ChangePasswordRequest changePasswordRequest) {
+        User userReturn = iUserService.updatePassword(changePasswordRequest);
+
+        if(userReturn != null) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.User.CHANGE_PASSWORD_SUCCESS),
+                    HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.User.CHANGE_PASSWORD_FAILED),
+                    HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    //user
     @PutMapping("/user/user/update-image-profile")
     public ResponseEntity<?> updateImageProfileUser(@ModelAttribute @Valid ProfileImageRequest profileImageRequest) {
          return updateImageProfileAdmin(profileImageRequest);
@@ -130,17 +163,13 @@ public class UserController {
         return changePasswordAdmin(changePasswordRequest);
     }
 
-    @PutMapping("/admin/user/change-password")
-    public ResponseEntity<?> changePasswordAdmin(@RequestBody @Valid ChangePasswordRequest changePasswordRequest) {
-       User userReturn = iUserService.updatePassword(changePasswordRequest);
+    @GetMapping("/user/get-user-infor")
+    public ResponseEntity<?> getUserInfor() {
+        User userLogin = UserUtil.getDataUserLogin();
+        UserResponse userResponse = UserMapper.mapFromEntityToResponse(userLogin);
 
-       if(userReturn != null) {
-           return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.User.CHANGE_PASSWORD_SUCCESS),
-                   HttpStatus.OK);
-       } else {
-           return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.User.CHANGE_PASSWORD_FAILED),
-                   HttpStatus.BAD_REQUEST);
-       }
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.User.GET_DATA_SUCCESS, userResponse),
+                HttpStatus.OK);
     }
 
 }

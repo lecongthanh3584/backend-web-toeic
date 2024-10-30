@@ -30,6 +30,7 @@ public class VocabularyQuestionController {
 
     private final IVocabularyQuestionService iVocabularyQuestionService;
 
+    //Admin
     @GetMapping("/admin/vocabulary-question/get-all")
     public ResponseEntity<?> getAllVocabularyQuestions() {
         List<VocabularyQuestionResponse> vocabularyQuestions = iVocabularyQuestionService.getAllVocabularyQuestions().stream().map(
@@ -124,7 +125,7 @@ public class VocabularyQuestionController {
         }
     }
 
-    //  Người dùng
+    //  User
     @GetMapping("/public/vocabulary-question/get-by-topic/{topicId}/enable")
     public ResponseEntity<?> getEnableVocabularyQuestionsByTopicId(@PathVariable @Min(1) Integer topicId) {
         List<VocabularyQuestionResponse> vocabularyQuestions = iVocabularyQuestionService.getVocabularyQuestionsByTopicId(topicId).stream().map(

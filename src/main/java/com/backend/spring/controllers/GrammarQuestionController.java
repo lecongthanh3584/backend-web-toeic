@@ -30,6 +30,7 @@ public class GrammarQuestionController {
 
     private final IGrammarQuestionService iGrammarQuestionService;
 
+    //admin
     @GetMapping("/admin/grammar-question/get-all")
     public ResponseEntity<?> getAllGrammarQuestions() {
         List<GrammarQuestionResponse> grammarQuestions = iGrammarQuestionService.getAllGrammarQuestions().stream().map(
@@ -121,7 +122,7 @@ public class GrammarQuestionController {
         }
     }
 
-    //  Người dùng
+    //  user
     @GetMapping("/public/grammar-question/get-question-by-grammar/{grammarId}/enable")
     public ResponseEntity<?> getEnableGrammarQuestionsByGrammarId(@PathVariable("grammarId") @Min(1) Integer grammarId) {
         List<GrammarQuestionResponse> grammarQuestions = iGrammarQuestionService.getGrammarQuestionsByGrammarId(grammarId).stream().map(

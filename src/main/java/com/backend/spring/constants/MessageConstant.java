@@ -4,6 +4,8 @@ public class MessageConstant {
 
     public static final String INVALID_DATA = "Invalid data";
 
+    public static final String INVALID_PARAMETER = "Invalid parameter.";
+
     public static class Auth {
         public static final String SIGNIN_SUCCESS = "Signin successfully.";
         public static final String ACCOUNT_INACTIVATED = "Account not activated.";

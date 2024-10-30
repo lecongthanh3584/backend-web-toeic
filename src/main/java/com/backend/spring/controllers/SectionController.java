@@ -42,22 +42,6 @@ public class SectionController {
                 HttpStatus.OK);
     }
 
-//  Người dùng
-    @GetMapping("/public/section/get-all-enable")
-    public ResponseEntity<?> getAllEnableSections() {
-        List<SectionResponse> sectionList = iSectionService.getAllSections().stream().map(
-                SectionMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        // Lọc danh sách chỉ giữ lại các section có status là 1
-        List<SectionResponse> filteredSectionList = sectionList.stream()
-                .filter(section -> section.getStatus() == EStatus.ENABLE.getValue())
-                .collect(Collectors.toList());
-
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Section.GET_DATA_SUCCESS, filteredSectionList),
-                HttpStatus.OK);
-    }
-
     @GetMapping("/admin/section/get-by-id/{id}")
     public ResponseEntity<?> getSectionById(@PathVariable("id") @Min(1) Integer id) {
         SectionResponse section = SectionMapper.mapFromEntityToResponse(iSectionService.getSectionById(id));
@@ -135,20 +119,20 @@ public class SectionController {
 
     @DeleteMapping("/admin/section/delete/{id}")
     public ResponseEntity<?> deleteSection(@PathVariable("id") @Min(1) Integer id) {
-       try {
-           boolean result = iSectionService.deleteSection(id);
+        try {
+            boolean result = iSectionService.deleteSection(id);
 
-           if(result) {
-               return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.Section.DELETE_SUCCESS),
-                       HttpStatus.OK);
-           } else {
-               return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.Section.DELETE_FAILED),
-                       HttpStatus.BAD_REQUEST);
-           }
-       } catch (IOException e) {
-           return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), e.getMessage()),
-                   HttpStatus.INTERNAL_SERVER_ERROR);
-       }
+            if(result) {
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.Section.DELETE_SUCCESS),
+                        HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.Section.DELETE_FAILED),
+                        HttpStatus.BAD_REQUEST);
+            }
+        } catch (IOException e) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PutMapping("/admin/section/update-status/{id}")
@@ -165,5 +149,21 @@ public class SectionController {
     }
 
 
+
+    //  user
+    @GetMapping("/public/section/get-all-enable")
+    public ResponseEntity<?> getAllEnableSections() {
+        List<SectionResponse> sectionList = iSectionService.getAllSections().stream().map(
+                SectionMapper::mapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        // Lọc danh sách chỉ giữ lại các section có status là 1
+        List<SectionResponse> filteredSectionList = sectionList.stream()
+                .filter(section -> section.getStatus() == EStatus.ENABLE.getValue())
+                .collect(Collectors.toList());
+
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Section.GET_DATA_SUCCESS, filteredSectionList),
+                HttpStatus.OK);
+    }
 
 }

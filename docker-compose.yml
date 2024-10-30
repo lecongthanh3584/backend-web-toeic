@@ -1,26 +1,141 @@
-version: '3'
 
 services:
-  spring:
-    image: your-spring-app:latest
-    ports:
-      - "9004:9004"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/db-webtoeic
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-    depends_on:
-      - mysql
+#  spring-app:
+#    container_name: be-webtoeic
+#    image: be-webtoeic:latest
+#    ports:
+#      - "8888:8888"
+#    environment:
+#      - MYSQL_HOST=db-webtoeic
+#      - MYSQL_PORT=3306
+#      - MYSQL_USERNAME=root
+#      - MYSQL_PASSWORD=root
+#    networks:
+#       - spring-application
+#    depends_on:
+#      - mysql
 
   mysql:
+    container_name: db-webtoeic
     image: mysql:latest
+    ports:
+      - "3306:3306"
     environment:
-      - MYSQL_DATABASE=db-webtoeic
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=webtoeic
       - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - spring-application
     volumes:
       - mysql-data:/var/lib/mysql
 
+  redis:
+    container_name: redis-webtoeic
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - spring-application
+    volumes:
+      - redis-webtoeic:/data
+
+  elastic-search:
+    container_name: elastic-search
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.2
+    ports:
+      - "9200:9200"
+    networks:
+      - spring-application
+      - elastic-search
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+      - http.host=0.0.0.0
+      - transport.host=0.0.0.0
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:8.15.2
+    ports:
+      - "5601:5601"
+    environment:
+      - xpack.security.enabled=false
+      - ELASTICSEARCH_HOSTS=http://elastic-search:9200
+    networks:
+      - spring-application
+      - elastic-search
+
+  zookeeper:
+    container_name: zookeeper
+    image: debezium/zookeeper:2.2.1.Final
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - spring-application
+      - elastic-search
+
+  kafka:
+    container_name: kafka
+    image: debezium/kafka:2.2.1.Final
+    ports:
+      - "9092:9092"
+    links:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      ZOOKEEPER_CONNECT: zookeeper:2181
+    networks:
+      - elastic-search
+      - spring-application
+    depends_on:
+      - zookeeper
+      - elastic-search
+
+  debezium:
+    container_name: debezium
+    build: 
+      context: .
+      dockerfile: Dockerfile.sink
+    ports:
+      - "8083:8083"
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:29092
+      - GROUP_ID=1
+      - CONFIG_STORAGE_TOPIC=my_connect_configs
+      - OFFSET_STORAGE_TOPIC=my_connect_offsets
+      - STATUS_STORAGE_TOPIC=my_source_connect_statuses
+      - KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+    links:
+      - zookeeper
+      - mysql 
+      - kafka
+      - elastic-search
+    depends_on:
+     - kafka
+     - mysql
+     - elastic-search
+    networks:
+      - elastic-search
+      - spring-application
+
 volumes:
   mysql-data:
+    driver: local
+    name: mysql-data
+  redis-webtoeic:
+    driver: local
+    name: redis-webtoeic
+
+networks:
+  spring-application:
+    driver: bridge
+    name: spring-application
+  elastic-search:
+    driver: bridge
+    name: elastic-search

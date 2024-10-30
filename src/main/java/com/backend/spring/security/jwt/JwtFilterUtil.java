@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,13 +23,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.backend.spring.security.service.CustomUserDetailService;
 
 @Component
+@RequiredArgsConstructor
 public class JwtFilterUtil extends OncePerRequestFilter {
 
-  @Autowired
-  private JwtUtil jwtUtil;
+  private final JwtUtil jwtUtil;
 
-  @Autowired
-  private CustomUserDetailService userDetailService;
+  private final CustomUserDetailService userDetailService;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {

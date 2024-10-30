@@ -1,18 +1,21 @@
 package com.backend.spring.controllers;
 
 import com.backend.spring.constants.MessageConstant;
+import com.backend.spring.elastics.services.Exam.IExamDocumentService;
 import com.backend.spring.enums.EStatus;
 import com.backend.spring.enums.EStatusCode;
 import com.backend.spring.mapper.ExamMapper;
 import com.backend.spring.entities.Exam;
 import com.backend.spring.payload.request.ExamRequest;
 import com.backend.spring.payload.response.ExamResponse;
+import com.backend.spring.payload.response.main.PaginationData;
 import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.services.Exam.IExamService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -29,15 +32,9 @@ public class ExamController {
 
     private final IExamService iExamService;
 
-    @GetMapping("/admin/exam/get-all")
-    public ResponseEntity<?> getAllExams() {
-        List<ExamResponse> examResponseList = iExamService.getAllExams().stream().map(
-                ExamMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Exam.GET_DATA_SUCCESS, examResponseList),
-                HttpStatus.OK);
-    }
+    private final IExamDocumentService iExamDocumentService;
 
+    //Admin
     @GetMapping("/admin/exam/get-by-id/{id}")
     public ResponseEntity<?> getExamByExamId(@PathVariable("id") @Min(1) Integer examId) {
         ExamResponse examResponse = ExamMapper.mapFromEntityToResponse(iExamService.getExamById(examId));
@@ -118,40 +115,47 @@ public class ExamController {
     }
 
     @GetMapping("/admin/exam/get-all-mini-tests")
-    public ResponseEntity<?> getMiniTests() {
-        List<ExamResponse> miniTests = iExamService.getMiniTests().stream().map(
-                ExamMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
+    public ResponseEntity<?> getMiniTests(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "created_at:desc") String... sortBys
+    ) {
+        Page<Exam> examPage = iExamService.getMiniTests(page, keyword, sortBys);
 
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Exam.GET_DATA_SUCCESS, miniTests),
-                HttpStatus.OK);
+        PaginationData paginationData = PaginationData.builder().totalPage(examPage.getTotalPages()).totalElement(examPage.getTotalElements())
+                .pageNumber(examPage.getPageable().getPageNumber()).pageSize(examPage.getPageable().getPageSize()).build();
+
+        List<ExamResponse> examResponseList = examPage.getContent().stream().map(
+                ExamMapper::mapFromEntityToResponse
+        ).toList();
+
+        if (!examResponseList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Exam.GET_DATA_SUCCESS,
+                    paginationData, examResponseList), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Exam.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
+        }
     }
 
-//  Admin
     @GetMapping("/admin/exam/get-all-full-tests")
-    public ResponseEntity<?> getFullTests() {
-        List<ExamResponse> fullTests = iExamService.getFullTests().stream().map(
+    public ResponseEntity<?> getFullTests(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "created_at:desc") String... sortBys
+    ) {
+        Page<Exam> examPage = iExamService.getFullTests(page, keyword, sortBys);
+
+        PaginationData paginationData = PaginationData.builder().totalPage(examPage.getTotalPages()).totalElement(examPage.getTotalElements())
+                .pageNumber(examPage.getPageable().getPageNumber()).pageSize(examPage.getPageable().getPageSize()).build();
+
+        List<ExamResponse> examResponseList = examPage.getContent().stream().map(
                 ExamMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
+        ).toList();
 
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Exam.GET_DATA_SUCCESS, fullTests),
-                HttpStatus.OK);
-    }
-
-    @GetMapping("/public/exam/get-full-tests/enable")
-    public ResponseEntity<?> getEnableFullTests() {
-        List<ExamResponse> fullTests = iExamService.getFullTests().stream().map(
-                ExamMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        // Lọc danh sách chỉ giữ lại các Exam có examStatus là 1 (kích hoạt)
-        List<ExamResponse> filteredFullTests = fullTests.stream()
-                .filter(exam -> exam.getExamStatus().equals(EStatus.ENABLE.getValue()))
-                .collect(Collectors.toList());
-
-        if (!filteredFullTests.isEmpty()) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Exam.GET_DATA_SUCCESS, filteredFullTests),
-                    HttpStatus.OK);
+        if (!examResponseList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Exam.GET_DATA_SUCCESS,
+                    paginationData, examResponseList), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Exam.DATA_NOT_FOUND),
                     HttpStatus.NOT_FOUND);
@@ -166,4 +170,55 @@ public class ExamController {
                 HttpStatus.OK);
     }
 
+    //User
+    @GetMapping("/public/exam/get-full-tests/enable")
+    public ResponseEntity<?> getEnableFullTests(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "") String keyword
+    ) {
+        Page<Exam> fullTests = iExamService.getFullTestsEnable(page, keyword);
+
+        PaginationData paginationData = PaginationData.builder().totalPage(fullTests.getTotalPages()).totalElement(fullTests.getTotalElements())
+                .pageNumber(fullTests.getPageable().getPageNumber()).pageSize(fullTests.getPageable().getPageSize()).build();
+
+        List<ExamResponse> examResponseList = fullTests.getContent().stream().map(
+                ExamMapper::mapFromEntityToResponse
+        ).toList();
+
+        if (!examResponseList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Exam.GET_DATA_SUCCESS,
+                    paginationData, examResponseList), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Exam.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/public/exam/get-mini-tests/enable")
+    public ResponseEntity<?> getEnableMiniTests(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "") String keyword
+    ) {
+        Page<Exam> fullTests = iExamService.getMiniTestsEnable(page, keyword);
+
+        PaginationData paginationData = PaginationData.builder().totalPage(fullTests.getTotalPages()).totalElement(fullTests.getTotalElements())
+                .pageNumber(fullTests.getPageable().getPageNumber()).pageSize(fullTests.getPageable().getPageSize()).build();
+
+        List<ExamResponse> examResponseList = fullTests.getContent().stream().map(
+                ExamMapper::mapFromEntityToResponse
+        ).toList();
+
+        if (!examResponseList.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.Exam.GET_DATA_SUCCESS,
+                    paginationData, examResponseList), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.Exam.DATA_NOT_FOUND),
+                    HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/public/get-exam-document")
+    public ResponseEntity<?> getExamDocument() {
+        return new ResponseEntity<>(iExamDocumentService.getAllExamDocument(),HttpStatus.OK);
+    }
 }

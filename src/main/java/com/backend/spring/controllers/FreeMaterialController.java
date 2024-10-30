@@ -3,10 +3,13 @@ package com.backend.spring.controllers;
 import com.backend.spring.constants.MessageConstant;
 import com.backend.spring.enums.EStatus;
 import com.backend.spring.enums.EStatusCode;
+import com.backend.spring.mapper.ExamMapper;
 import com.backend.spring.mapper.FreeMaterialMapper;
 import com.backend.spring.entities.FreeMaterial;
 import com.backend.spring.payload.request.FreeMaterialRequest;
+import com.backend.spring.payload.response.ExamResponse;
 import com.backend.spring.payload.response.FreeMaterialResponse;
+import com.backend.spring.payload.response.main.PaginationData;
 import com.backend.spring.payload.response.main.ResponseData;
 import com.backend.spring.services.FreeMaterial.IFreeMaterialService;
 import io.jsonwebtoken.io.IOException;
@@ -16,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -37,34 +41,27 @@ public class FreeMaterialController {
 
 //  Admin
     @GetMapping("/admin/free-material/get-all")
-    public ResponseEntity<?> getAllFreeMaterials() {
-        List<FreeMaterialResponse> freeMaterialList = iFreeMaterialService.getAllFreeMaterials().stream().map(
+    public ResponseEntity<?> getAllFreeMaterials(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "created_at:desc") String... sortBys
+    ) {
+        Page<FreeMaterial> freeMaterialPage = iFreeMaterialService.getAllFreeMaterials(page, keyword, sortBys);
+
+        PaginationData paginationData = PaginationData.builder().totalPage(freeMaterialPage.getTotalPages()).totalElement(freeMaterialPage.getTotalElements())
+                .pageNumber(freeMaterialPage.getPageable().getPageNumber()).pageSize(freeMaterialPage.getPageable().getPageSize()).build();
+
+        List<FreeMaterialResponse> freeMaterialResponses = freeMaterialPage.getContent().stream().map(
                 FreeMaterialMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
+        ).toList();
 
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.FreeMaterial.GET_DATA_SUCCESS,
-                freeMaterialList), HttpStatus.OK);
-    }
-
-//  Người dùng
-    @GetMapping("/public/free-material/get-all/enable")
-    public ResponseEntity<?> getAllEnableFreeMaterials() {
-        List<FreeMaterialResponse> freeMaterialList = iFreeMaterialService.getAllFreeMaterials().stream().map(
-                FreeMaterialMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        // Lọc danh sách chỉ giữ lại các FreeMaterial có freeMaterialStatus là 1 (enable)
-        List<FreeMaterialResponse> filteredFreeMaterials = freeMaterialList.stream()
-                .filter(freeMaterial -> freeMaterial.getMaterialStatus().equals(EStatus.ENABLE.getValue()))
-                .collect(Collectors.toList());
-
-        if (!filteredFreeMaterials.isEmpty()) {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.FreeMaterial.GET_DATA_SUCCESS, filteredFreeMaterials),
-                    HttpStatus.OK);
+        if(!freeMaterialResponses.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.FreeMaterial.GET_DATA_SUCCESS, paginationData,
+                    freeMaterialResponses), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.FreeMaterial.DATA_NOT_FOUND),
-                    HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.FreeMaterial.DATA_NOT_FOUND), HttpStatus.NOT_FOUND);
         }
+
     }
 
     @GetMapping("/admin/free-material/get-by-id/{id}")
@@ -118,20 +115,20 @@ public class FreeMaterialController {
 
     @DeleteMapping("/admin/free-material/delete/{id}")
     public ResponseEntity<?> deleteFreeMaterial(@PathVariable("id") @Min(1) Integer id) {
-       try {
-           boolean result = iFreeMaterialService.deleteFreeMaterial(id);
+        try {
+            boolean result = iFreeMaterialService.deleteFreeMaterial(id);
 
-           if(result) {
-               return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.FreeMaterial.DELETE_SUCCESS),
-                       HttpStatus.OK);
-           } else {
-               return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.FreeMaterial.DELETE_FAILED),
-                       HttpStatus.BAD_REQUEST);
-           }
-       } catch (IOException | java.io.IOException e) {
-           return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), e.getMessage()),
-                   HttpStatus.INTERNAL_SERVER_ERROR);
-       }
+            if(result) {
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_SUCCESS.getValue(), MessageConstant.FreeMaterial.DELETE_SUCCESS),
+                        HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), MessageConstant.FreeMaterial.DELETE_FAILED),
+                        HttpStatus.BAD_REQUEST);
+            }
+        } catch (IOException | java.io.IOException e) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DELETE_FAILED.getValue(), e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PutMapping("/admin/free-material/update-status/{id}")
@@ -155,6 +152,30 @@ public class FreeMaterialController {
                 HttpStatus.OK);
     }
 
+
+    //  Người dùng
+    @GetMapping("/public/free-material/get-all/enable")
+    public ResponseEntity<?> getAllEnableFreeMaterials(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "") String keyword
+    ) {
+
+        Page<FreeMaterial> freeMaterialPage = iFreeMaterialService.getAllFreeMaterialsEnable(page, keyword);
+
+        PaginationData paginationData = PaginationData.builder().totalPage(freeMaterialPage.getTotalPages()).totalElement(freeMaterialPage.getTotalElements())
+                .pageNumber(freeMaterialPage.getPageable().getPageNumber()).pageSize(freeMaterialPage.getPageable().getPageSize()).build();
+
+        List<FreeMaterialResponse> freeMaterialResponses = freeMaterialPage.getContent().stream().map(
+                FreeMaterialMapper::mapFromEntityToResponse
+        ).toList();
+
+        if(!freeMaterialResponses.isEmpty()) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.FreeMaterial.GET_DATA_SUCCESS, paginationData,
+                    freeMaterialResponses), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.FreeMaterial.DATA_NOT_FOUND), HttpStatus.NOT_FOUND);
+        }
+    }
     @GetMapping("/public/free-material/download/{filename}")
     public ResponseEntity<Resource> downloadFreeMaterial(@PathVariable String filename) {
         // Đường dẫn tới thư mục chứa tệp PDF

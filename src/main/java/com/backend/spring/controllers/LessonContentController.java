@@ -29,6 +29,7 @@ public class LessonContentController {
 
     private final ILessonContentService iLessonContentService;
 
+    //admin
     @GetMapping("/admin/lesson-content/get-all")
     public ResponseEntity<?> getAllLessonContents() {
         List<LessonContentResponse> lessonContents = iLessonContentService.getAllLessonContents().stream().map(
@@ -36,20 +37,6 @@ public class LessonContentController {
         ).collect(Collectors.toList());
 
         return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.LessonContent.GET_DATA_SUCCESS, lessonContents),
-                HttpStatus.OK);
-    }
-
-    @GetMapping("/public/lesson-content/get-all/enable")
-    public ResponseEntity<?> getAllLessonContentsEnable() {
-        List<LessonContentResponse> lessonContents = iLessonContentService.getAllLessonContents().stream().map(
-                LessonContentMapper::mapFromEntityToResponse
-        ).collect(Collectors.toList());
-
-        List<LessonContentResponse> lessonContentResponseEnableList = lessonContents.stream().filter(
-                item -> item.getLessonContentStatus().equals(EStatus.ENABLE.getValue())
-        ).collect(Collectors.toList());
-
-        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.LessonContent.GET_DATA_SUCCESS, lessonContentResponseEnableList),
                 HttpStatus.OK);
     }
 
@@ -107,15 +94,15 @@ public class LessonContentController {
 
     @PutMapping("/admin/lesson-content/update-status/{id}")
     public ResponseEntity<?> updateLessonContentStatus(@PathVariable("id") @Min(1) Integer id, @RequestBody Integer newStatus) {
-       LessonContent lessonContent = iLessonContentService.updateLessonContentStatus(id, newStatus);
+        LessonContent lessonContent = iLessonContentService.updateLessonContentStatus(id, newStatus);
 
-       if(lessonContent != null) {
-           return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.LessonContent.UPDATE_STATUS_SUCCESS),
-                   HttpStatus.OK);
-       } else {
-           return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.LessonContent.UPDATE_STATUS_FAILED),
-                   HttpStatus.BAD_REQUEST);
-       }
+        if(lessonContent != null) {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_SUCCESS.getValue(), MessageConstant.LessonContent.UPDATE_STATUS_SUCCESS),
+                    HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new ResponseData<>(EStatusCode.UPDATE_FAILED.getValue(), MessageConstant.LessonContent.UPDATE_STATUS_FAILED),
+                    HttpStatus.BAD_REQUEST);
+        }
     }
 
     // Lấy danh sách nội dung bài học theo lesson_id
@@ -132,6 +119,21 @@ public class LessonContentController {
             return new ResponseEntity<>(new ResponseData<>(EStatusCode.DATA_NOT_FOUND.getValue(), MessageConstant.LessonContent.DATA_NOT_FOUND),
                     HttpStatus.NOT_FOUND);
         }
+    }
+
+    //user
+    @GetMapping("/public/lesson-content/get-all/enable")
+    public ResponseEntity<?> getAllLessonContentsEnable() {
+        List<LessonContentResponse> lessonContents = iLessonContentService.getAllLessonContents().stream().map(
+                LessonContentMapper::mapFromEntityToResponse
+        ).collect(Collectors.toList());
+
+        List<LessonContentResponse> lessonContentResponseEnableList = lessonContents.stream().filter(
+                item -> item.getLessonContentStatus().equals(EStatus.ENABLE.getValue())
+        ).collect(Collectors.toList());
+
+        return new ResponseEntity<>(new ResponseData<>(EStatusCode.GET_DATA_SUCCESS.getValue(), MessageConstant.LessonContent.GET_DATA_SUCCESS, lessonContentResponseEnableList),
+                HttpStatus.OK);
     }
 
     @GetMapping("/public/lesson-content/get-content-by-lesson/{lessonId}/enable")

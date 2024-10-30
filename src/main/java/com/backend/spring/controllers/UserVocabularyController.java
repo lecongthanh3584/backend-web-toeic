@@ -29,6 +29,7 @@ public class UserVocabularyController {
 
     private final IUserVocabularyService iUserVocabularyService;
 
+    //User
     @PostMapping("/user/user-vocabulary/create")
     public ResponseEntity<?> createUserVocabulary(@RequestBody @Valid UserVocabularyRequest userVocabularyRequest) {
         UserVocabulary createdUserVocabulary = iUserVocabularyService.createUserVocabulary(userVocabularyRequest);
